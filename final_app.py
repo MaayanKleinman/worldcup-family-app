@@ -2,8 +2,16 @@ import streamlit as st
 import requests
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
+import gspread
+from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="centered")
+
+# 📍 1. הנה השורה המדוברת! החליפי את מה שבתוך המרכאות בקישור של הגוגל שיטס שלך:
+GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
+
+# 👤 2. רשימת המשתתפים המשפחתית האמיתית שלך (שני את השמות כאן למי שאת רוצה):
+FAMILY_MEMBERS = ["אבא", "אמא", "מאיה", "דני", "נועם"]
 
 st.markdown("""
     <style>
@@ -15,6 +23,7 @@ st.markdown("""
 
 st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל 2026 - המשפחה 🏆</h1>", unsafe_allow_html=True)
 
+# מילון תרגום ודגלים מורחב למונדיאל
 TEAM_TRANSLATION = {
     "Brazil": "🇧🇷 ברזיל", "France": "🇫🇷 צרפת", "Argentina": "🇦🇷 ארגנטינה",
     "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿 אנגליה", "Spain": "🇪🇸 ספרד", "Germany": "🇩🇪 גרמניה",
@@ -34,7 +43,7 @@ now_il = datetime.now(IL_TZ)
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
 
 with tab1:
-    username = st.selectbox("👤 מי המנחש הנוכחי?", ["דני המלך", "מאיה גול", "נועם המנחש"], key="daily_user")
+    username = st.selectbox("👤 מי המנחש הנוכחי?", FAMILY_MEMBERS, key="daily_user")
     st.markdown("<div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; border-right: 5px solid #e61d25; color: #b30000; font-weight: bold;'>⚠️ שימו לב: הניחוש תקף ל-90 דקות משחק בלבד! (כולל תוספת זמן פציעות, לא כולל הארכות ופנדלים)</div>", unsafe_allow_html=True)
     st.write("")
     
@@ -99,20 +108,20 @@ with tab1:
 with tab2:
     st.subheader("🏆 הניחוש המוקדם שלך לטורניר")
     st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ["ברזיל 🇧🇷", "צרפת 🇫🇷", "ארגנטינה 🇦🇷", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸"])
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ["ברזיל 🇧🇷", "צרפת 🇫🇷", "ארגנטינה 🇦睿", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸"])
     st.write("---")
     st.write("**⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)**")
-    c1, c2 = st.columns(2)
+    c1, col_b = st.columns(2)
     with c1:
-        st.selectbox("ראשות בית א'", ["נבחרת א'1", "נבחרת א'2"])
-        st.selectbox("ראשות בית ב'", ["נבחרת ב'1", "נבחרת ב'2"])
-    with c2:
-        st.selectbox("ראשות בית ג'", ["נבחרת ג'1", "נבחרת ג'2"])
-        st.selectbox("ראשות בית ד'", ["נבחרת ד'1", "נבחרת ד'2"])
+        st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽"])
+        st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦"])
+    with col_b:
+        st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵"])
+        st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪"])
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
         st.success("הבחירות לטווח הארוך נשמרו בהצלחה!")
 
 with tab3:
     st.subheader("📊 טבלת האליפות המשפחתית")
-    mock_data = {"משתמש": ["דני המלך 👑", "מאיה גול ⚽", "נועם המנחש 🎯"], "נקודות משחקים": [25, 18, 12], "בונוס מוקדם": [0, 0, 0], "סך הכל": [25, 18, 12]}
+    mock_data = {"משתמש": FAMILY_MEMBERS, "נקודות משחקים": [0]*len(FAMILY_MEMBERS), "בונוס מוקדם": [0]*len(FAMILY_MEMBERS), "סך הכל": [0]*len(FAMILY_MEMBERS)}
     st.table(mock_data)
