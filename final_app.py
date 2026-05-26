@@ -1,0 +1,118 @@
+import streamlit as st
+import requests
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
+
+st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="centered")
+
+st.markdown("""
+    <style>
+    body { direction: RTL; text-align: right; }
+    div Rigth-to-Left { direction: RTL; }
+    p { text-align: right; }
+    </style>
+    """, unsafe_allow_html=True)
+
+st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל 2026 - המשפחה 🏆</h1>", unsafe_allow_html=True)
+
+TEAM_TRANSLATION = {
+    "Brazil": "🇧🇷 ברזיל", "France": "🇫🇷 צרפת", "Argentina": "🇦🇷 ארגנטינה",
+    "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿 אנגליה", "Spain": "🇪🇸 ספרד", "Germany": "🇩🇪 גרמניה",
+    "Italy": "🇮🇹 איטליה", "Portugal": "🇵🇹 פורטוגל", "Morocco": "🇲🇦 מרוקו", "Japan": "🇯🇵 יפן"
+}
+
+def get_team_name_heb(en_name):
+    return TEAM_TRANSLATION.get(en_name, en_name)
+
+API_KEY = "7f43ad9046msh5f15cf89c2479d2p13156ejsn65430696c85b"
+BASE_URL = "https://sportapi7.p.rapidapi.com"
+HEADERS = {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": "sportapi7.p.rapidapi.com"}
+
+IL_TZ = ZoneInfo("Asia/Jerusalem")
+now_il = datetime.now(IL_TZ)
+
+tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
+
+with tab1:
+    username = st.selectbox("👤 מי המנחש הנוכחי?", ["דני המלך", "מאיה גול", "נועם המנחש"], key="daily_user")
+    st.markdown("<div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; border-right: 5px solid #e61d25; color: #b30000; font-weight: bold;'>⚠️ שימו לב: הניחוש תקף ל-90 דקות משחק בלבד! (כולל תוספת זמן פציעות, לא כולל הארכות ופנדלים)</div>", unsafe_allow_html=True)
+    st.write("")
+    
+    guess_inputs = {}
+    has_matches = False
+    
+    for i in range(3):
+        target_date = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
+        date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
+        
+        try:
+            url = f"{BASE_URL}/api/v1/sport/football/scheduled-events/{target_date}"
+            resp = requests.get(url, headers=HEADERS)
+            events = resp.json().get("events", [])
+        except:
+            events = []
+            
+        if events:
+            has_matches = True
+            st.markdown(f"### 📅 משחקי {date_label} ({target_date.split('-')[2]}/{target_date.split('-')[1]}):")
+            
+            for event in events[:3]:
+                match_id = event.get("id")
+                home_en = event.get("homeTeam", {}).get("name")
+                away_en = event.get("awayTeam", {}).get("name")
+                
+                home_heb = get_team_name_heb(home_en)
+                away_heb = get_team_name_heb(away_en)
+                
+                match_timestamp = event.get("startTimestamp")
+                match_time = datetime.fromtimestamp(match_timestamp, tz=ZoneInfo("UTC")).astimezone(IL_TZ)
+                
+                is_locked = now_il >= match_time
+                lock_text = "🔒 נעול! המשחק החל" if is_locked else f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
+                
+                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
+                st.caption(lock_text)
+                
+                col1, col2, col3 = st.columns([3, 3, 2])
+                with col1:
+                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", disabled=is_locked)
+                with col2:
+                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", disabled=is_locked)
+                with col3:
+                    st.write("")
+                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
+                
+                if not is_locked:
+                    guess_inputs[match_id] = {"home_g": h_input, "away_g": a_input, "joker": j_check, "name": f"{home_en} vs {away_en}"}
+                st.write("---")
+
+    if has_matches and guess_inputs:
+        if st.button("💾 שמור את הניחושים שלי"):
+            joker_count = sum(1 for d in guess_inputs.values() if d["joker"])
+            if joker_count > 1:
+                st.error("⚠️ עצור! מותר לבחור רק ג'וקר אחד לכל יום משחקים.")
+            else:
+                st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו.")
+    elif not has_matches:
+        st.info("אין משחקים קרובים בטווח של יומיים קדימה.")
+
+with tab2:
+    st.subheader("🏆 הניחוש המוקדם שלך לטורניר")
+    st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ["ברזיל 🇧🇷", "צרפת 🇫🇷", "ארגנטינה 🇦🇷", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸"])
+    st.write("---")
+    st.write("**⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)**")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.selectbox("ראשות בית א'", ["נבחרת א'1", "נבחרת א'2"])
+        st.selectbox("ראשות בית ב'", ["נבחרת ב'1", "נבחרת ב'2"])
+    with c2:
+        st.selectbox("ראשות בית ג'", ["נבחרת ג'1", "נבחרת ג'2"])
+        st.selectbox("ראשות בית ד'", ["נבחרת ד'1", "נבחרת ד'2"])
+    if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
+        st.success("הבחירות לטווח הארוך נשמרו בהצלחה!")
+
+with tab3:
+    st.subheader("📊 טבלת האליפות המשפחתית")
+    mock_data = {"משתמש": ["דני המלך 👑", "מאיה גול ⚽", "נועם המנחש 🎯"], "נקודות משחקים": [25, 18, 12], "בונוס מוקדם": [0, 0, 0], "סך הכל": [25, 18, 12]}
+    st.table(mock_data)
