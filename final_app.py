@@ -10,29 +10,22 @@ st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="c
 # קישור הטבלה שלך
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
 
-# פונקציית חיבור מאובטחת לגוגל שיטס
+# פונקציית חיבור מאובטחת לגוגל שיטס - כולל הדפסת שגיאה מפורטת
 def init_connection():
     try:
-        # המערכת תחפש את מפתחות הגישה בצורה מאובטחת בהגדרות של סטרימליט
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds_dict = st.secrets["gcp_service_account"]
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
     except Exception as e:
-        st.warning(f"🔄 אזהרת חיבור: {e}")
+        st.error(f"❌ שגיאת תקשורת עם השרת: {e}")
         return None
 
 sheet = init_connection()
 
-# משיכת שמות משתמשים אמיתיים מהטבלה (או ברירת מחדל אם אין חיבור)
+# שמות בני המשפחה
 FAMILY_MEMBERS = ["אבא", "אמא", "מאיה", "דני", "נועם"]
-if sheet:
-    try:
-        users_sheet = sheet.worksheet("Users")
-        FAMILY_MEMBERS = [row[0] for row in users_sheet.get_all_values() if row][1:] # מדלג על הכותרת
-    except:
-        pass
 
 st.markdown("""
     <style>
@@ -70,7 +63,6 @@ with tab1:
     guess_inputs = {}
     has_matches = False
     
-    # מציג 3 ימים קדימה (היום, מחר, מחרתיים) - כל יום כגוש אחד
     for i in range(3):
         target_date = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
@@ -86,10 +78,9 @@ with tab1:
             has_matches = True
             st.markdown(f"### 📅 משחקי {date_label} ({target_date.split('-')[2]}/{target_date.split('-')[1]}):")
             
-            # ספירת המשחקים הכוללת באותו יום לצורך חוק הג'וקר
             total_games_today = len(events)
             
-            for event in events[:4]: # מציג עד 4 משחקים ליום בתצוגה
+            for event in events[:4]:
                 match_id = event.get("id")
                 home_en = event.get("homeTeam", {}).get("name")
                 away_en = event.get("awayTeam", {}).get("name")
@@ -126,12 +117,9 @@ with tab1:
                     }
                 st.write("---")
 
-    # כפתור השמירה תמיד יישאר פתוח ולא יקרוס
     if has_matches:
         if st.button("💾 שמור את הניחושים שלי"):
             joker_count = sum(1 for d in guess_inputs.values() if d["joker"])
-            
-            # בדיקה האם המשתמש ניסה לשים ג'וקר ביום עם פחות מ-3 משחקים
             joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in guess_inputs.values())
             
             if joker_count > 1:
@@ -139,7 +127,6 @@ with tab1:
             elif joker_in_short_day:
                 st.error("⚠️ לא ניתן להשתמש בג'וקר ביום זה! חוק הג'וקר תקף רק לימים בהם משוחקים 3 משחקים ומעלה.")
             else:
-                # לוגיקת שמירה לטבלה במידה ויש חיבור
                 if sheet:
                     try:
                         guesses_sheet = sheet.worksheet("DailyGuesses")
@@ -153,7 +140,7 @@ with tab1:
                     except Exception as e:
                         st.error(f"שגיאה בשמירה לטבלה: {e}")
                 else:
-                    st.success(f"🎉 סימולציה מושמעת! הניחושים של {username} תקינים (האפליקציה תישמר רשמית ברגע שנזין מפתחות גישה בסטרימליט).")
+                    st.warning("⚠️ הניחוש תקין, אך לא נשמר בטבלה. בדקי את הודעת השגיאה למעלה.")
     else:
         st.info("אין משחקים קרובים בטווח של יומיים קדימה.")
 
