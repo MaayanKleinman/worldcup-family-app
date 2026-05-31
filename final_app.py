@@ -7,11 +7,32 @@ from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="centered")
 
-# 📍 1. הנה השורה המדוברת! החליפי את מה שבתוך המרכאות בקישור של הגוגל שיטס שלך:
+# קישור הטבלה שלך
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
 
-# 👤 2. רשימת המשתתפים המשפחתית האמיתית שלך (שני את השמות כאן למי שאת רוצה):
+# פונקציית חיבור מאובטחת לגוגל שיטס
+def init_connection():
+    try:
+        # המערכת תחפש את מפתחות הגישה בצורה מאובטחת בהגדרות של סטרימליט
+        scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+        creds_dict = st.secrets["gcp_service_account"]
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        client = gspread.authorize(creds)
+        return client.open_by_url(GOOGLE_SHEET_URL)
+    except Exception as e:
+        st.warning("🔄 האפליקציה פועלת במצב תצוגה מקומית (טרם הוזנו מפתחות גישה מאובטחים בסטרימליט).")
+        return None
+
+sheet = init_connection()
+
+# משיכת שמות משתמשים אמיתיים מהטבלה (או ברירת מחדל אם אין חיבור)
 FAMILY_MEMBERS = ["אבא", "אמא", "מאיה", "דני", "נועם"]
+if sheet:
+    try:
+        users_sheet = sheet.worksheet("Users")
+        FAMILY_MEMBERS = [row[0] for row in users_sheet.get_all_values() if row][1:] # מדלג על הכותרת
+    except:
+        pass
 
 st.markdown("""
     <style>
@@ -23,7 +44,6 @@ st.markdown("""
 
 st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל 2026 - המשפחה 🏆</h1>", unsafe_allow_html=True)
 
-# מילון תרגום ודגלים מורחב למונדיאל
 TEAM_TRANSLATION = {
     "Brazil": "🇧🇷 ברזיל", "France": "🇫🇷 צרפת", "Argentina": "🇦🇷 ארגנטינה",
     "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿 אנגליה", "Spain": "🇪🇸 ספרד", "Germany": "🇩🇪 גרמניה",
@@ -50,6 +70,7 @@ with tab1:
     guess_inputs = {}
     has_matches = False
     
+    # מציג 3 ימים קדימה (היום, מחר, מחרתיים) - כל יום כגוש אחד
     for i in range(3):
         target_date = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
@@ -65,7 +86,10 @@ with tab1:
             has_matches = True
             st.markdown(f"### 📅 משחקי {date_label} ({target_date.split('-')[2]}/{target_date.split('-')[1]}):")
             
-            for event in events[:3]:
+            # ספירת המשחקים הכוללת באותו יום לצורך חוק הג'וקר
+            total_games_today = len(events)
+            
+            for event in events[:4]: # מציג עד 4 משחקים ליום בתצוגה
                 match_id = event.get("id")
                 home_en = event.get("homeTeam", {}).get("name")
                 away_en = event.get("awayTeam", {}).get("name")
@@ -92,32 +116,61 @@ with tab1:
                     j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
                 
                 if not is_locked:
-                    guess_inputs[match_id] = {"home_g": h_input, "away_g": a_input, "joker": j_check, "name": f"{home_en} vs {away_en}"}
+                    guess_inputs[match_id] = {
+                        "home_g": h_input, 
+                        "away_g": a_input, 
+                        "joker": j_check, 
+                        "name": f"{home_en} vs {away_en}",
+                        "total_games_day": total_games_today,
+                        "date": target_date
+                    }
                 st.write("---")
 
-    if has_matches and guess_inputs:
+    # כפתור השמירה תמיד יישאר פתוח ולא יקרוס
+    if has_matches:
         if st.button("💾 שמור את הניחושים שלי"):
             joker_count = sum(1 for d in guess_inputs.values() if d["joker"])
+            
+            # בדיקה האם המשתמש ניסה לשים ג'וקר ביום עם פחות מ-3 משחקים
+            joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in guess_inputs.values())
+            
             if joker_count > 1:
                 st.error("⚠️ עצור! מותר לבחור רק ג'וקר אחד לכל יום משחקים.")
+            elif joker_in_short_day:
+                st.error("⚠️ לא ניתן להשתמש בג'וקר ביום זה! חוק הג'וקר תקף רק לימים בהם משוחקים 3 משחקים ומעלה.")
             else:
-                st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו.")
-    elif not has_matches:
+                # לוגיקת שמירה לטבלה במידה ויש חיבור
+                if sheet:
+                    try:
+                        guesses_sheet = sheet.worksheet("DailyGuesses")
+                        for m_id, data in guess_inputs.items():
+                            joker_str = "YES" if data["joker"] else "NO"
+                            guesses_sheet.append_row([
+                                datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                                username, m_id, data["name"], data["home_g"], data["away_g"], joker_str
+                            ])
+                        st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו בהצלחה בגוגל שיטס!")
+                    except Exception as e:
+                        st.error(f"שגיאה בשמירה לטבלה: {e}")
+                else:
+                    st.success(f"🎉 סימולציה מושמעת! הניחושים של {username} תקינים (האפליקציה תישמר רשמית ברגע שנזין מפתחות גישה בסטרימליט).")
+    else:
         st.info("אין משחקים קרובים בטווח של יומיים קדימה.")
 
 with tab2:
     st.subheader("🏆 הניחוש המוקדם שלך לטורניר")
     st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ["ברזיל 🇧🇷", "צרפת 🇫🇷", "ארגנטינה 🇦睿", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸"])
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ["ברזיל 🇧🇷", "צרפת 🇫🇷", "ארגנטינה 🇦🇷", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸", "גרמניה 🇩🇪"])
     st.write("---")
     st.write("**⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)**")
     c1, col_b = st.columns(2)
     with c1:
-        st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽"])
-        st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦"])
+        st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽", "קולומביה 🇨🇴"])
+        st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦", "דנמרק 🇩🇰"])
     with col_b:
-        st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵"])
-        st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪"])
+        st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵", "שוודיה 🇸🇪"])
+        st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪", "ארצות הברית 🇺🇸"])
+    
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
         st.success("הבחירות לטווח הארוך נשמרו בהצלחה!")
 
