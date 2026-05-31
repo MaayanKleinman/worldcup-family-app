@@ -20,7 +20,7 @@ def init_connection():
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
     except Exception as e:
-        st.warning("🔄 האפליקציה פועלת במצב תצוגה מקומית (טרם הוזנו מפתחות גישה מאובטחים בסטרימליט).")
+        st.warning(f"🔄 אזהרת חיבור: {e}")
         return None
 
 sheet = init_connection()
