@@ -14,7 +14,10 @@ GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-
 def init_connection():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
+        creds_dict = st.secrets["gcp_service_account"]
+        # תיקון אוטומטי לירידות השורה במפתח
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
     except Exception as e:
