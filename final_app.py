@@ -25,7 +25,7 @@ def init_connection():
 sheet = init_connection()
 
 # 👥 כאן משנים, מוסיפים או מוחקים את שמות המשתתפים במשחק המשפחתי!
-FAMILY_MEMBERS = ["אבא", "אמא", "מאיה", "דני", "נועם"]
+FAMILY_MEMBERS = ["נחש ינחש" , "רתם המצחין", "הזקן" , "ינצה פנצה"]
 
 st.markdown("""
     <style>
