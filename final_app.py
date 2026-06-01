@@ -11,10 +11,17 @@ st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="c
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
 
 # פונקציית חיבור נקייה ויציבה לגוגל שיטס
+# פונקציית חיבור מאובטחת לגוגל שיטס - מתקנת שגיאות קריאה בפתיחה
 def init_connection():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-        creds_dict = st.secrets["gcp_service_account"]
+        
+        # 1. לוקחים את הנתונים מסטרימליט והופכים למילון שניתן לעריכה
+        creds_dict = dict(st.secrets["gcp_service_account"])
+        
+        # 2. מתקנים את קידוד השורות כדי שהמפתח ייקרא בצורה תקינה
+        creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+        
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
