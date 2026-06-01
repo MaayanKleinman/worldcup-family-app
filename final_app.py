@@ -23,7 +23,16 @@ def init_connection():
 
 sheet = init_connection()
 
-# 👥 שמות המשתתפים המעודכנים של המשפחה!
+def safe_update(worksheet, range_name, values):
+    try:
+        worksheet.update(values=values, range_name=range_name)
+    except:
+        try:
+            worksheet.update(range_name, values)
+        except Exception as e:
+            st.error(f"❌ שגיאה בעדכון השורה בשיטס: {e}")
+
+# 👥 שמות המשתתפים המעודכנים והמצחיקים שלכם!
 FAMILY_MEMBERS = ["נחש ינחש" , "מחליד", "המכשפה" , "צבצב", "יובל המנוול", "הזקן", "רתם המצחין", "עדיאל קורקוס"]
 
 st.markdown("""
@@ -39,7 +48,7 @@ st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל
 username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
 st.write("---")
 
-# 🌍 מילון תרגום רשת מלא לכל 48 הנבחרות כולל וריאציות API רשמיות
+# 🌍 מילון תרגום מתוקן הרמטית לפי הנתונים הגולמיים של ה-API
 TEAM_TRANSLATION = {
     # בית א'
     "Mexico": "מקסיקו 🇲🇽",
@@ -48,7 +57,7 @@ TEAM_TRANSLATION = {
     "Czech Republic": "צ'כיה 🇨🇿", "Czechia": "צ'כיה 🇨🇿",
     # בית ב'
     "Canada": "קנדה 🇨🇦",
-    "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦",
+    "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦", "Bosnia-Herzegovina": "בוסניה והרצגובינה 🇧🇦",
     "Qatar": "קטאר 🇶🇦",
     "Switzerland": "שווייץ 🇨🇭",
     # בית ג'
@@ -78,7 +87,7 @@ TEAM_TRANSLATION = {
     "New Zealand": "ניו זילנד 🇳🇿",
     # בית ח'
     "Spain": "ספרד 🇪🇸",
-    "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻",
+    "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻",
     "Saudi Arabia": "ערב הסעודית 🇸🇦",
     "Uruguay": "אורוגוואי 🇺🇾",
     # בית ט'
@@ -141,7 +150,7 @@ all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
-teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
+teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨חש"]
 teams_c = ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"]
 teams_d = ["ארצות הברית 🇺🇸", "פרגוואי 🇵🇾", "אוסטרליה 🇦🇺", "טורקיה 🇹🇷"]
 teams_e = ["גרמניה 🇩🇪", "קוראסאו 🇨🇼", "חוף השנהב 🇨🇮", "אקוודור 🇪🇨"]
@@ -151,7 +160,7 @@ teams_h = ["ספרד 🇪🇸", "כף ורדה 🇨🇻", "ערב הסעודית
 teams_i = ["צרפת 🇫🇷", "סנגל 🇸🇳", "עיראק 🇮🇶", "נורווגיה 🇳🇴"]
 teams_j = ["ארגנטינה 🇦🇷", "אלג'יריה 🇩🇿", "אוסטריה 🇦🇹", "ירדן 🇯🇴"]
 teams_k = ["פורטוגל 🇵🇹", "קונגו הדמוקרטית 🇨🇩", "אוזבקיסטן 🇺🇿", "קולומביה 🇨🇴"]
-teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה 🇵🇦"]
+teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה פנמה 🇵🇦"]
 
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
@@ -236,9 +245,8 @@ with tab1:
                         guesses_sheet = sheet.worksheet("DailyGuesses")
                         all_rows = guesses_sheet.get_all_values()
                         
-                        if len(all_rows) == 0:
-                            guesses_sheet.append_row(["Timestamp", "Username", "Match ID", "Match Name", "Home Goals", "Away Goals", "Joker"], table_range="A1")
-                            all_rows = guesses_sheet.get_all_values()
+                        u_idx = 1 
+                        m_idx = 2 
                             
                         for m_id, data in guess_inputs.items():
                             joker_str = "YES" if data["joker"] else "NO"
@@ -249,7 +257,6 @@ with tab1:
                             
                             existing_row_idx = None
                             for idx, row in enumerate(all_rows):
-                                # ללא כותרות - סורק מהשורה הראשונה ממש
                                 if len(row) > 2 and row[1].strip() == username.strip() and row[2].strip() == str(m_id).strip():
                                     existing_row_idx = idx + 1
                                     break
@@ -312,7 +319,6 @@ with tab2:
                 
                 existing_t_idx = None
                 for idx, row in enumerate(all_t_rows):
-                    # ללא כותרות - סורק מהשורה הראשונה ממש ומנקה רווחים
                     if len(row) > 1 and row[1].strip() == username.strip():
                         existing_t_idx = idx + 1
                         break
@@ -356,7 +362,6 @@ with tab3:
                     top_team_en = g_table[0].get("team", {}).get("name")
                     actual_group_winners[g_name] = clean_string(get_team_name_heb(top_team_en))
 
-            # חישוב נקודות משחקים יומיים - סורק מהשורה הראשונה (ללא דילוג) וחסין לכותרות עבר
             guesses_sheet = sheet.worksheet("DailyGuesses")
             user_guesses = guesses_sheet.get_all_values()
             if len(user_guesses) > 0:
@@ -368,7 +373,7 @@ with tab3:
                         g_home = int(row[4])
                         g_away = int(row[5])
                     except ValueError:
-                        continue # מדלג בבטחה אם זו שורת טקסט ישנה או כותרת
+                        continue 
                     g_joker = row[6] == "YES"
                     
                     if g_match_id in actual_results:
@@ -390,7 +395,6 @@ with tab3:
                         if g_user in scores_table: 
                             scores_table[g_user]["משחקים"] += match_points
 
-            # חישוב אוטומטי של בונוס ראשי בתים + אלופה - סורק מהשורה הראשונה
             tournament_sheet = sheet.worksheet("TournamentGuesses")
             t_guesses = tournament_sheet.get_all_values()
             
@@ -429,6 +433,3 @@ with tab3:
     formatted_data = [{"משתמש": m, "⚽ נקודות משחקים": d["משחקים"], "🏆 בונוס טורניר": d["בונוס טורניר"], "🔥 סך הכל": d["סך הכל"]} for m, d in scores_table.items()]
     formatted_data = sorted(formatted_data, key=lambda x: x["🔥 סך הכל"], reverse=True)
     st.table(formatted_data)
-st.write("---")
-st.write("### 🧪 בדיקת שמות גולמיים מה-API (זמני):")
-st.json(all_wc_standings)
