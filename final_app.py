@@ -16,7 +16,7 @@ def init_connection():
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds_dict = dict(st.secrets["gcp_service_account"])
         
-        # מתקן את קידוד השורות כדי שהמפתח ייקרא בצורה תקינה
+        # מתקן את קידוד השורות כדי שהMפתח ייקרא בצורה תקינה
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
         
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
@@ -41,10 +41,14 @@ st.markdown("""
 
 st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל 2026 - המשפחה 🏆</h1>", unsafe_allow_html=True)
 
+# בחירת המנחש הועברה לחלק העליון - חוסך בחירות כפולות!
+username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
+st.write("---")
+
 TEAM_TRANSLATION = {
-    "Brazil": "🇧🇷 ברזיל", "France": "🇫🇷 צרפת", "Argentina": "🇦🇷 ארגנטינה",
-    "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿 אנגליה", "Spain": "🇪🇸 ספרד", "Germany": "🇩🇪 גרמניה",
-    "Italy": "🇮🇹 איטליה", "Portugal": "🇵🇹 פורטוגל", "Morocco": "🇲🇦 מרוקו", "Japan": "🇯🇵 יפן"
+    "Brazil": "ברזיל 🇧🇷", "France": "צרפת 🇫🇷", "Argentina": "ארגנטינה 🇦🇷",
+    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Spain": "ספרד 🇪🇸", "Germany": "גרמניה 🇩🇪",
+    "Italy": "איטליה 🇮🇹", "Portugal": "פורטוגל 🇵🇹", "Morocco": "מרוקו 🇲🇦", "Japan": "יפן 🇯🇵"
 }
 
 def get_team_name_heb(en_name):
@@ -60,7 +64,6 @@ now_il = datetime.now(IL_TZ)
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
 
 with tab1:
-    username = st.selectbox("👤 מי המנחש הנוכחי?", FAMILY_MEMBERS, key="daily_user")
     st.markdown("<div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; border-right: 5px solid #e61d25; color: #b30000; font-weight: bold;'>⚠️ שימו לב: הניחוש תקף ל-90 דקות משחק בלבד! (כולל תוספת זמן פציעות, לא כולל הארכות ופנדלים)</div>", unsafe_allow_html=True)
     st.write("")
     
@@ -78,7 +81,7 @@ with tab1:
         except:
             events = []
             
-        # 🧪 בלוק סימולציה זמני לבדיקות - מייצר משחקים פיקטיביים אם ה-API ריק
+        # בלוק סימולציה זמני לבדיקות
         if not events and i == 0:
             now_utc_ts = int(datetime.now(ZoneInfo("UTC")).timestamp())
             events = [
@@ -86,20 +89,19 @@ with tab1:
                     "id": "test_match_1",
                     "homeTeam": {"name": "Argentina"},
                     "awayTeam": {"name": "Brazil"},
-                    "startTimestamp": now_utc_ts + 7200  # משחק בעוד שעתיים
+                    "startTimestamp": now_utc_ts + 7200
                 },
                 {
                     "id": "test_match_2",
                     "homeTeam": {"name": "France"},
                     "awayTeam": {"name": "England"},
-                    "startTimestamp": now_utc_ts + 10800 # משחק בעוד שלוש שעות
+                    "startTimestamp": now_utc_ts + 10800
                 }
             ]
             
         if events:
             has_matches = True
             st.markdown(f"### 📅 משחקי {date_label} ({target_date.split('-')[2]}/{target_date.split('-')[1]}):")
-            
             total_games_today = len(events)
             
             for event in events[:4]:
@@ -140,7 +142,7 @@ with tab1:
                 st.write("---")
 
     if has_matches:
-        if st.button("💾 שמור את הניחושים שלי"):
+        if st.button("💾 שמור את הניחושים היומיים שלי"):
             joker_count = sum(1 for d in guess_inputs.values() if d["joker"])
             joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in guess_inputs.values())
             
@@ -152,49 +154,67 @@ with tab1:
                 if sheet:
                     try:
                         guesses_sheet = sheet.worksheet("DailyGuesses")
-                        
-                        # בדיקה אם הגיליון ריק לחלוטין ויצירת כותרות
                         if len(guesses_sheet.get_all_values()) == 0:
                             guesses_sheet.append_row(["Timestamp", "Username", "Match ID", "Match Name", "Home Goals", "Away Goals", "Joker"], table_range="A1")
                             
                         for m_id, data in guess_inputs.items():
                             joker_str = "YES" if data["joker"] else "NO"
-                            
                             new_row = [
                                 datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-                                username, 
-                                str(m_id), 
-                                str(data["name"]), 
-                                int(data["home_g"]), 
-                                int(data["away_g"]), 
-                                joker_str
+                                username, str(m_id), str(data["name"]), int(data["home_g"]), int(data["away_g"]), joker_str
                             ]
                             guesses_sheet.append_row(new_row, table_range="A1")
-                            
-                        st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו בהצלחה בגוגל שיטס!")
+                        st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו בהצלחה!")
                     except Exception as e:
                         st.error(f"❌ שגיאה בשמירה לטבלה: {e}")
                 else:
-                    st.warning("⚠️ הניחוש תקין, אך לא נשמר בטבלה. בדקי את הודעת השגיאה למעלה.")
+                    st.warning("⚠️ אין חיבור לטבלה.")
     else:
         st.info("אין משחקים קרובים בטווח של יומיים קדימה.")
 
 with tab2:
     st.subheader("🏆 הניחוש המוקדם שלך לטורניר")
     st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ["ברזיל 🇧🇷", "צרפת 🇫🇷", "ארגנטינה 🇦🇷", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸", "גרמניה 🇩🇪"])
+    
+    # רשימת מתמודדות מורחבת ומסודרת נקי
+    ALL_CONTENDERS = [
+        "ארגנטינה 🇦🇷", "ברזיל 🇧🇷", "צרפת 🇫🇷", "אנגליה 🏴 *󠁧󠁢󠁥󠁮󠁧󠁿*", "ספרד 🇪🇸", 
+        "גרמניה 🇩🇪", "פורטוגל 🇵🇹", "איטליה 🇮🇹", "הולנד 🇳🇱", "מרוקו 🇲🇦", 
+        "בלגיה 🇧🇪", "אורוגוואי 🇺🇾", "קולומביה 🇨🇴", "קרואטיה 🇭🇷", "ארה\"ב 🇺🇸", "יפן 🇯🇵"
+    ]
+    
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ALL_CONTENDERS)
     st.write("---")
     st.write("**⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)**")
+    
     c1, col_b = st.columns(2)
     with c1:
-        st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽", "קולומביה 🇨🇴"])
-        st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦", "דנמרק 🇩קים"])
+        group_a = st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽", "קולומביה 🇨🇴"])
+        group_b = st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦", "דנמרק 🇩🇰"])
     with col_b:
-        st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵", "שוודיה 🇸🇪"])
-        st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪", "ארצות הברית 🇺🇸"])
+        group_c = st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵", "שוודיה 🇸🇪"])
+        group_d = st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪", "ארצות הברית 🇺🇸"])
     
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
-        st.success("הבחירות לטווח הארוך נשמרו בהצלחה!")
+        if sheet:
+            try:
+                tournament_sheet = sheet.worksheet("TournamentGuesses")
+                
+                # אם הגיליון ריק, ניצור שורת כותרות קבועה
+                if len(tournament_sheet.get_all_values()) == 0:
+                    tournament_sheet.append_row(["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D"], table_range="A1")
+                
+                # שמירת הבחירות של המשתמש הנוכחי
+                t_row = [
+                    datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                    username, champ, group_a, group_b, group_c, group_d
+                ]
+                tournament_sheet.append_row(t_row, table_range="A1")
+                st.success(f"🎉 הבחירות לטווח הארוך של {username} נשמרו בהצלחה בטבלה!")
+            except Exception as e:
+                st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
+        else:
+            st.error("⚠️ השרת אינו מחובר לגוגל שיטס.")
 
 with tab3:
     st.subheader("📊 טבלת האליפות המשפחתית")
