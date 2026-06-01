@@ -57,7 +57,10 @@ HEADERS = {"X-Auth-Token": TOKEN}
 IL_TZ = ZoneInfo("Asia/Jerusalem")
 now_il = datetime.now(IL_TZ)
 
-# ⏱️ רענון מהיר וחכם - ה-Cache נשמר ל-120 שניות (2 דקות) בלבד! עדכון מהיר בלי לחסום את ה-API
+# 🔒 תיקון השעה ל-22:00 הרשמי של תחילת הטורניר לנעילת הניחושים ארוכי הטווח
+TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
+is_tournament_started = now_il >= TOURNAMENT_START_TIME
+
 @st.cache_data(ttl=120)
 def fetch_world_cup_matches():
     try:
@@ -94,20 +97,8 @@ teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷
 
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
+# נתוני סימולציה זמניים לימים אלו לפני שהטורניר מתחיל באמת
 target_date_str = now_il.strftime("%Y-%m-%d")
-daily_events = [m for m in all_wc_matches if m.get("utcDate", "").startswith(target_date_str)]
-
-if not daily_events:
-    daily_events = [
-        {
-            "id": "test_match_1", "homeTeam": {"name": "Argentina"}, "awayTeam": {"name": "Brazil"}, 
-            "utcDate": target_date_str + "T12:00:00Z", "status": "FINISHED", "score": {"fullTime": {"home": 2, "away": 1}}
-        },
-        {
-            "id": "test_match_2", "homeTeam": {"name": "Mexico"}, "awayTeam": {"name": "Czech Republic"}, 
-            "utcDate": target_date_str + "T23:59:00Z", "status": "TIMED", "score": {"fullTime": {"home": None, "away": None}}
-        }
-    ]
 
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
 
@@ -118,47 +109,76 @@ with tab1:
     guess_inputs = {}
     has_open_matches = False
     
-    st.markdown(f"### 📅 משחקי היום ({target_date_str.split('-')[2]}/{target_date_str.split('-')[1]}):")
-    
-    for match in daily_events:
-        match_id = match.get("id")
-        home_en = match.get("homeTeam", {}).get("name")
-        away_en = match.get("awayTeam", {}).get("name")
-        home_heb = get_team_name_heb(home_en)
-        away_heb = get_team_name_heb(away_en)
+    for i in range(3):
+        current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
+        date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
         
-        utc_time_str = match.get("utcDate").replace("Z", "+00:00")
-        match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
-        is_locked = now_il >= match_time or match.get("status") == "FINISHED"
+        # 🔄 תיקון אזור הזמן: ממירים כל משחק מה-API לשעון ישראל ומסננים לפי היום בארץ!
+        daily_events = []
+        for m in all_wc_matches:
+            utc_time_str = m.get("utcDate", "")
+            if utc_time_str:
+                utc_time_str = utc_time_str.replace("Z", "+00:00")
+                match_time_il = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
+                if match_time_il.strftime("%Y-%m-%d") == current_loop_date_str:
+                    daily_events.append(m)
         
-        if match.get("status") == "FINISHED":
-            score_home = match.get("score", {}).get("fullTime", {}).get("home")
-            score_away = match.get("score", {}).get("fullTime", {}).get("away")
-            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
-        elif is_locked:
-            lock_text = "🔒 נעול! המשחק החל"
-        else:
-            lock_text = f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
-            has_open_matches = True
+        # בלוק סימולציה זמני לבדיקות (מופעל רק אם ה-API ריק לחלוטין)
+        if not daily_events and i == 0:
+            daily_events = [
+                {
+                    "id": "test_match_1", "homeTeam": {"name": "Argentina"}, "awayTeam": {"name": "Brazil"}, 
+                    "utcDate": current_loop_date_str + "T12:00:00Z", "status": "FINISHED", "score": {"fullTime": {"home": 2, "away": 1}}
+                },
+                {
+                    "id": "test_match_2", "homeTeam": {"name": "Mexico"}, "awayTeam": {"name": "Czech Republic"}, 
+                    "utcDate": current_loop_date_str + "T23:59:00Z", "status": "TIMED", "score": {"fullTime": {"home": None, "away": None}}
+                }
+            ]
             
-        st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
-        st.caption(lock_text)
-        
-        col1, col2, col3 = st.columns([3, 3, 2])
-        with col1:
-            h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", disabled=is_locked)
-        with col2:
-            a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", disabled=is_locked)
-        with col3:
-            st.write("")
-            j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
-        
-        if not is_locked:
-            guess_inputs[match_id] = {
-                "home_g": h_input, "away_g": a_input, "joker": j_check, 
-                "name": f"{home_en} vs {away_en}", "total_games_day": len(daily_events), "date": target_date_str
-            }
-        st.write("---")
+        if daily_events:
+            st.markdown(f"### 📅 משחקי {date_label} ({current_loop_date_str.split('-')[2]}/{current_loop_date_str.split('-')[1]}):")
+            total_games_today = len(daily_events)
+            
+            for match in daily_events:
+                match_id = match.get("id")
+                home_en = match.get("homeTeam", {}).get("name")
+                away_en = match.get("awayTeam", {}).get("name")
+                home_heb = get_team_name_heb(home_en)
+                away_heb = get_team_name_heb(away_en)
+                
+                utc_time_str = match.get("utcDate").replace("Z", "+00:00")
+                match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
+                is_locked = now_il >= match_time or match.get("status") == "FINISHED"
+                
+                if match.get("status") == "FINISHED":
+                    score_home = match.get("score", {}).get("fullTime", {}).get("home")
+                    score_away = match.get("score", {}).get("fullTime", {}).get("away")
+                    lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
+                elif is_locked:
+                    lock_text = "🔒 נעול! המשחק החל"
+                else:
+                    lock_text = f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
+                    has_open_matches = True
+                    
+                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
+                st.caption(lock_text)
+                
+                col1, col2, col3 = st.columns([3, 3, 2])
+                with col1:
+                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", disabled=is_locked)
+                with col2:
+                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", disabled=is_locked)
+                with col3:
+                    st.write("")
+                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
+                
+                if not is_locked:
+                    guess_inputs[match_id] = {
+                        "home_g": h_input, "away_g": a_input, "joker": j_check, 
+                        "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today, "date": current_loop_date_str
+                    }
+                st.write("---")
 
     if has_open_matches:
         if st.button("💾 שמור את הניחושים היומיים שלי"):
@@ -201,33 +221,39 @@ with tab1:
                         st.success(f"🎉 כל הכבוד {username}! הניחושים שלך עודכנו בהצלחה בטבלה!")
                     except Exception as e:
                         st.error(f"❌ שגיאה בשמירה: {e}")
+    else:
+        st.info("אין משחקים פתוחים לניחוש כרגע בטווח הימים הקרוב.")
 
 with tab2:
     st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
-    st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
     
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS)
+    if is_tournament_started:
+        st.error("🔒 הטורניר החל רשמית! חלק זה נעול לחלוטין ולא ניתן לשנות ניחושים יותר.")
+    else:
+        st.info("⏰ חלק זה יינעל אוטומטית ב-11 ליוני 2026 בשעה 22:00 עם שריקת הפתיחה של המונדיאל!")
+    
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, disabled=is_tournament_started)
     st.write("---")
     st.markdown("#### ⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)")
     
     col1, col2 = st.columns(2)
     with col1:
-        group_a = st.selectbox("ראשות בית א'", teams_a)
-        group_b = st.selectbox("ראשות בית ב'", teams_b)
-        group_c = st.selectbox("ראשות בית ג'", teams_c)
-        group_d = st.selectbox("ראשות בית ד'", teams_d)
-        group_e = st.selectbox("ראשות בית ה'", teams_e)
-        group_f = st.selectbox("ראשות בית ו'", teams_f)
+        group_a = st.selectbox("ראשות בית א'", teams_a, disabled=is_tournament_started)
+        group_b = st.selectbox("ראשות בית ב'", teams_b, disabled=is_tournament_started)
+        group_c = st.selectbox("ראשות בית ג'", teams_c, disabled=is_tournament_started)
+        group_d = st.selectbox("ראשות בית ד'", teams_d, disabled=is_tournament_started)
+        group_e = st.selectbox("ראשות בית ה'", teams_e, disabled=is_tournament_started)
+        group_f = st.selectbox("ראשות בית ו'", teams_f, disabled=is_tournament_started)
     with col2:
-        group_g = st.selectbox("ראשות בית ז'", teams_g)
-        group_h = st.selectbox("ראשות בית ח'", teams_h)
-        group_i = st.selectbox("ראשות בית ט'", teams_i)
-        group_j = st.selectbox("ראשות בית י'", teams_j)
-        group_k = st.selectbox("ראשות בית י\"א", teams_k)
-        group_l = st.selectbox("ראשות בית י\"ב", teams_l)
+        group_g = st.selectbox("ראשות בית ז'", teams_g, disabled=is_tournament_started)
+        group_h = st.selectbox("ראשות בית ח'", teams_h, disabled=is_tournament_started)
+        group_i = st.selectbox("ראשות בית ט'", teams_i, disabled=is_tournament_started)
+        group_j = st.selectbox("ראשות בית י'", teams_j, disabled=is_tournament_started)
+        group_k = st.selectbox("ראשות בית י\"א", teams_k, disabled=is_tournament_started)
+        group_l = st.selectbox("ראשות בית י\"ב", teams_l, disabled=is_tournament_started)
 
     st.write("---")
-    if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
+    if st.button("💾 שמור ניחושי טורניר ארוכי טווח", disabled=is_tournament_started):
         if sheet:
             try:
                 tournament_sheet = sheet.worksheet("TournamentGuesses")
@@ -265,30 +291,27 @@ with tab3:
     
     if sheet:
         try:
-            # 1. עיבוד תוצאות אמת של משחקים מה-API + זיהוי אוטומטי של האלופה הרשמית מהגמר!
+            # 1. עיבוד תוצאות אמת של משחקים מה-API + זיהוי אלופה
             actual_results = {}
             actual_champion = None
             
-            # סריקה לאיתור האלופה הרשמית ממשחק הגמר
             for m in all_wc_matches:
                 if m.get("status") == "FINISHED":
-                    # איסוף תוצאות רגילות
                     full_time = m.get("score", {}).get("fullTime", {})
                     if full_time.get("home") is not None and full_time.get("away") is not None:
                         actual_results[str(m.get("id"))] = {"home": int(full_time.get("home")), "away": int(full_time.get("away"))}
                     
-                    # בדיקה האם זה משחק הגמר כדי לנעול אלופה
                     if m.get("stage") == "FINAL":
-                        winner_code = m.get("score", {}).get("winner") # "HOME_TEAM" או "AWAY_TEAM"
+                        winner_code = m.get("score", {}).get("winner")
                         if winner_code == "HOME_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("homeTeam", {}).get("name")))
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
-            # 🧪 סימולציה זמנית לבדיקות: אם הטורניר לא התחיל, נזריק אלופה ומשחק דמה כדי שתראו שזה עובד!
+            # 🧪 סימולציה זמנית לבדיקות (מוזרק אוטומטית אם הטבלה ריקה)
             if not actual_results:
                 actual_results["test_match_1"] = {"home": 2, "away": 1}
-                actual_champion = clean_string("ארגנטינה 🇦🇷") # קובע שארגנטינה היא האלופה לצורך הטסט
+                actual_champion = clean_string("ארגנטינה 🇦🇷")
 
             # 2. עיבוד טבלאות בתים רשמיות לזיהוי מקום 1
             actual_group_winners = {}
@@ -304,7 +327,7 @@ with tab3:
                     top_team_en = g_table[0].get("team", {}).get("name")
                     actual_group_winners[g_name] = clean_string(get_team_name_heb(top_team_en))
 
-            # 3. חישוב נקודות משחקים יומיים (חוק הפרש שערים רק בניצחונות!)
+            # 3. חישוב נקודות משחקים יומיים
             guesses_sheet = sheet.worksheet("DailyGuesses")
             user_guesses = guesses_sheet.get_all_values()
             if len(user_guesses) > 1:
@@ -316,15 +339,14 @@ with tab3:
                         real = actual_results[g_match_id]
                         match_points = 0
                         
-                        # 🏛️ מדרגות הניקוד המתוקנות:
                         if g_home == real["home"] and g_away == real["away"]:
-                            match_points = 5 # בול בתוצאה (תופס גם לתיקו וגם לניצחון)
+                            match_points = 5 
                         elif g_home != g_away and (g_home - g_away) == (real["home"] - real["away"]):
-                            match_points = 3 # פגיעה בהפרש שערים - אך ורק אם זה לא תיקו!
+                            match_points = 3 # חוק הפרש שערים - תקף אך ורק בניצחונות!
                         elif (g_home > g_away and real["home"] > real["away"]) or \
                              (g_home < g_away and real["home"] < real["away"]) or \
                              (g_home == g_away and real["home"] == real["away"]):
-                            match_points = 2 # פגיעה רק בכיוון הכללי של המשחק
+                            match_points = 2 
                             
                         if g_joker: 
                             match_points *= 2
@@ -332,7 +354,7 @@ with tab3:
                         if g_user in scores_table: 
                             scores_table[g_user]["משחקים"] += match_points
 
-            # 4. חישוב אוטומטי של בונוס ראשי בתים + בונוס אלופה (10 נקודות!)
+            # 4. חישוב אוטומטי של בונוס ראשי בתים + אלופה
             tournament_sheet = sheet.worksheet("TournamentGuesses")
             t_guesses = tournament_sheet.get_all_values()
             
@@ -344,27 +366,24 @@ with tab3:
             
             if len(t_guesses) > 1:
                 for row in t_guesses[1:]:
-                    if len(row) < 15: continue
+                    if len(row) < 3: continue 
                     t_user = row[1]
                     if t_user in scores_table:
                         bonus_points = 0
                         
-                        # א) בדיקת 12 הבתים
                         for group_key, col_idx in group_columns_mapping:
-                            if group_key in actual_group_winners:
+                            if group_key in actual_group_winners and len(row) > col_idx:
                                 user_pick_clean = clean_string(row[col_idx])
                                 if actual_group_winners[group_key] in user_pick_clean:
                                     bonus_points += 3
                                     
-                        # ב) בדיקת האלופה הסופית (עמודה אינדקס 2) - מעניקה 10 נקודות בונוס!
-                        if actual_champion:
+                        if actual_champion and len(row) > 2:
                             user_champ_clean = clean_string(row[2])
                             if actual_champion in user_champ_clean:
                                 bonus_points += 10
                                 
                         scores_table[t_user]["בונוס טורניר"] += bonus_points
 
-            # 5. סיכום סופי
             for member in scores_table:
                 scores_table[member]["סך הכל"] = scores_table[member]["משחקים"] + scores_table[member]["בונוס טורניר"]
                 
