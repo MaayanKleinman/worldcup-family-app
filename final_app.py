@@ -16,7 +16,7 @@ def init_connection():
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds_dict = dict(st.secrets["gcp_service_account"])
         
-        # מתקן את קידוד השורות כדי שהMפתח ייקרא בצורה תקינה
+        # מתקן את קידוד השורות כדי שהמפתח ייקרא בצורה תקינה
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
         
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
@@ -41,7 +41,7 @@ st.markdown("""
 
 st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל 2026 - המשפחה 🏆</h1>", unsafe_allow_html=True)
 
-# בחירת המנחש הועברה לחלק העליון - חוסך בחירות כפולות!
+# בחירת המנחש בחלק העליון
 username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
 st.write("---")
 
@@ -173,44 +173,57 @@ with tab1:
         st.info("אין משחקים קרובים בטווח של יומיים קדימה.")
 
 with tab2:
-    st.subheader("🏆 הניחוש המוקדם שלך לטורניר")
+    st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
     st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
     
-    # רשימת מתמודדות מורחבת ומסודרת נקי
-    ALL_CONTENDERS = [
-        "ארגנטינה 🇦🇷", "ברזיל 🇧🇷", "צרפת 🇫🇷", "אנגליה 🏴 *󠁧󠁢󠁥󠁮󠁧󠁿*", "ספרד 🇪🇸", 
+    # כל המועמדות הגדולות לבחירת האלופה
+    CHAMP_OPTIONS = [
+        "ארגנטינה 🇦🇷", "ברזיל 🇧🇷", "צרפת 🇫🇷", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸", 
         "גרמניה 🇩🇪", "פורטוגל 🇵🇹", "איטליה 🇮🇹", "הולנד 🇳🇱", "מרוקו 🇲🇦", 
-        "בלגיה 🇧🇪", "אורוגוואי 🇺🇾", "קולומביה 🇨🇴", "קרואטיה 🇭🇷", "ארה\"ב 🇺🇸", "יפן 🇯🇵"
+        "אורוגוואי 🇺🇾", "קולומביה 🇨🇴", "קרואטיה 🇭🇷", "בלגיה 🇧🇪", "יפן 🇯🇵", "ארה\"ב 🇺🇸"
     ]
-    
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע?", ALL_CONTENDERS)
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", CHAMP_OPTIONS)
     st.write("---")
-    st.write("**⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)**")
     
-    c1, col_b = st.columns(2)
-    with c1:
-        group_a = st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽", "קולומביה 🇨🇴"])
-        group_b = st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦", "דנמרק 🇩🇰"])
-    with col_b:
-        group_c = st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵", "שוודיה 🇸🇪"])
-        group_d = st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪", "ארצות הברית 🇺🇸"])
+    st.markdown("#### ⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)")
     
+    # חלוקת 12 הבתים המדויקת שסיפקת עם דגלים
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        group_a = st.selectbox("ראשות בית א'", ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"])
+        group_b = st.selectbox("ראשות בית ב'", ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"])
+        group_c = st.selectbox("ראשות בית ג'", ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"])
+        group_d = st.selectbox("ראשות בית ד'", ["ארצות הברית 🇺🇸", "פרגוואי 🇵🇾", "אוסטרליה 🇦🇺", "טוריקיה 🇹🇷"])
+        group_e = st.selectbox("ראשות בית ה'", ["גרמניה 🇩🇪", "קוראסאו 🇨🇼", "חוף השנהב 🇨🇮", "אקוודור 🇪🇨"])
+        group_f = st.selectbox("ראשות בית ו'", ["הולנד 🇳🇱", "יפן 🇯🇵", "שוודיה 🇸🇪", "טוניסיה 🇹🇳"])
+
+    with col2:
+        group_g = st.selectbox("ראשות בית ז'", ["בלגיה 🇧🇪", "מצרים 🇪🇬", "איראן 🇮🇷", "ניו זילנד 🇳🇿"])
+        group_h = st.selectbox("ראשות בית ח'", ["ספרד 🇪🇸", "כף ורדה 🇨🇻", "ערב הסעודית 🇸🇦", "אורוגוואי 🇺🇾"])
+        group_i = st.selectbox("ראשות בית ט'", ["צרפת 🇫🇷", "sנגל 🇸🇳", "עיראק 🇮🇶", "נורווגיה 🇳🇴"])
+        group_j = st.selectbox("ראשות בית י'", ["ארגנטינה 🇦🇷", "אלג'יריה 🇩🇿", "אוסטריה 🇦🇹", "ירדן 🇯🇴"])
+        group_k = st.selectbox("ראשות בית י\"א", ["פורטוגל 🇵🇹", "קונגו הדמוקרטית 🇨🇩", "אוזבקיסטן 🇺🇿", "קולומביה 🇨🇴"])
+        group_l = st.selectbox("ראשות בית י\"ב", ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה 🇵🇦"])
+
+    st.write("---")
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
         if sheet:
             try:
                 tournament_sheet = sheet.worksheet("TournamentGuesses")
                 
-                # אם הגיליון ריק, ניצור שורת כותרות קבועה
+                # יצירת שורת כותרת מורחבת לכל 12 הבתים במידה והגיליון ריק
                 if len(tournament_sheet.get_all_values()) == 0:
-                    tournament_sheet.append_row(["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D"], table_range="A1")
+                    headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
+                    tournament_sheet.append_row(headers, table_range="A1")
                 
-                # שמירת הבחירות של המשתמש הנוכחי
+                # שורת הנתונים המלאה של המשתמש
                 t_row = [
                     datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-                    username, champ, group_a, group_b, group_c, group_d
+                    username, champ, group_a, group_b, group_c, group_d, group_e, group_f, group_g, group_h, group_i, group_j, group_k, group_l
                 ]
                 tournament_sheet.append_row(t_row, table_range="A1")
-                st.success(f"🎉 הבחירות לטווח הארוך של {username} נשמרו בהצלחה בטבלה!")
+                st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך (כולל כל 12 הבתים) נשמרו בטבלה!")
             except Exception as e:
                 st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
         else:
