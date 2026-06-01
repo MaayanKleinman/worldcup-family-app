@@ -57,7 +57,7 @@ HEADERS = {"X-Auth-Token": TOKEN}
 IL_TZ = ZoneInfo("Asia/Jerusalem")
 now_il = datetime.now(IL_TZ)
 
-# 🔒 תיקון השעה ל-22:00 הרשמי של תחילת הטורניר לנעילת הניחושים ארוכי הטווח
+# 🔒 מועד תחילת הטורניר הרשמי לנעילת הניחושים ארוכי הטווח
 TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
 is_tournament_started = now_il >= TOURNAMENT_START_TIME
 
@@ -97,7 +97,6 @@ teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷
 
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
-# נתוני סימולציה זמניים לימים אלו לפני שהטורניר מתחיל באמת
 target_date_str = now_il.strftime("%Y-%m-%d")
 
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
@@ -113,7 +112,6 @@ with tab1:
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
         
-        # 🔄 תיקון אזור הזמן: ממירים כל משחק מה-API לשעון ישראל ומסננים לפי היום בארץ!
         daily_events = []
         for m in all_wc_matches:
             utc_time_str = m.get("utcDate", "")
@@ -123,7 +121,6 @@ with tab1:
                 if match_time_il.strftime("%Y-%m-%d") == current_loop_date_str:
                     daily_events.append(m)
         
-        # בלוק סימולציה זמני לבדיקות (מופעל רק אם ה-API ריק לחלוטין)
         if not daily_events and i == 0:
             daily_events = [
                 {
@@ -221,8 +218,6 @@ with tab1:
                         st.success(f"🎉 כל הכבוד {username}! הניחושים שלך עודכנו בהצלחה בטבלה!")
                     except Exception as e:
                         st.error(f"❌ שגיאה בשמירה: {e}")
-    else:
-        st.info("אין משחקים פתוחים לניחוש כרגע בטווח הימים הקרוב.")
 
 with tab2:
     st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
@@ -291,7 +286,6 @@ with tab3:
     
     if sheet:
         try:
-            # 1. עיבוד תוצאות אמת של משחקים מה-API + זיהוי אלופה
             actual_results = {}
             actual_champion = None
             
@@ -308,17 +302,17 @@ with tab3:
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
-            # 🧪 סימולציה זמנית לבדיקות (מוזרק אוטומטית אם הטבלה ריקה)
-            if not actual_results:
+            # 🔄 קביעת מקור טבלאות הבתים: אם הטורניר טרם החל, נכריח את המערכת להשתמש בנתוני הטסט של מקסיקו וקנדה!
+            actual_group_winners = {}
+            if not is_tournament_started:
                 actual_results["test_match_1"] = {"home": 2, "away": 1}
                 actual_champion = clean_string("ארגנטינה 🇦🇷")
-
-            # 2. עיבוד טבלאות בתים רשמיות לזיהוי מקום 1
-            actual_group_winners = {}
-            current_standings = all_wc_standings if all_wc_standings else [
-                {"group": "GROUP_A", "table": [{"position": 1, "team": {"name": "Mexico"}}]},
-                {"group": "GROUP_B", "table": [{"position": 1, "team": {"name": "Canada"}}]}
-            ]
+                current_standings = [
+                    {"group": "GROUP_A", "table": [{"position": 1, "team": {"name": "Mexico"}}]},
+                    {"group": "GROUP_B", "table": [{"position": 1, "team": {"name": "Canada"}}]}
+                ]
+            else:
+                current_standings = all_wc_standings
                 
             for group_data in current_standings:
                 g_name = group_data.get("group")
@@ -342,7 +336,7 @@ with tab3:
                         if g_home == real["home"] and g_away == real["away"]:
                             match_points = 5 
                         elif g_home != g_away and (g_home - g_away) == (real["home"] - real["away"]):
-                            match_points = 3 # חוק הפרש שערים - תקף אך ורק בניצחונות!
+                            match_points = 3 
                         elif (g_home > g_away and real["home"] > real["away"]) or \
                              (g_home < g_away and real["home"] < real["away"]) or \
                              (g_home == g_away and real["home"] == real["away"]):
