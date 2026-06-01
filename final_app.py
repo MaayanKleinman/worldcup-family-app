@@ -12,21 +12,23 @@ GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-
 
 # פונקציית חיבור נקייה ויציבה לגוגל שיטס
 # פונקציית חיבור מאובטחת לגוגל שיטס - מתקנת שגיאות קריאה בפתיחה
+import traceback
+
+# פונקציית חיבור עם חשיפת שגיאות מלאה (Traceback)
 def init_connection():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
-        
-        # 1. לוקחים את הנתונים מסטרימליט והופכים למילון שניתן לעריכה
         creds_dict = dict(st.secrets["gcp_service_account"])
         
-        # 2. מתקנים את קידוד השורות כדי שהמפתח ייקרא בצורה תקינה
+        # מתקן את השורות בכל מצב אפשרי
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
         
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
     except Exception as e:
-        st.error(f"❌ שגיאת תקשורת עם השרת: {e}")
+        st.error(f"❌ סוג השגיאה: {type(e).__name__}")
+        st.code(traceback.format_exc())
         return None
 
 sheet = init_connection()
