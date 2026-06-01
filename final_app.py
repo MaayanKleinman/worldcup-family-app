@@ -429,3 +429,6 @@ with tab3:
     formatted_data = [{"משתמש": m, "⚽ נקודות משחקים": d["משחקים"], "🏆 בונוס טורניר": d["בונוס טורניר"], "🔥 סך הכל": d["סך הכל"]} for m, d in scores_table.items()]
     formatted_data = sorted(formatted_data, key=lambda x: x["🔥 סך הכל"], reverse=True)
     st.table(formatted_data)
+st.write("---")
+st.write("### 🧪 בדיקת שמות גולמיים מה-API (זמני):")
+st.json(all_wc_standings)
