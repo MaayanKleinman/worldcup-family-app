@@ -334,6 +334,8 @@ with tab2:
 
 with tab3:
     st.markdown("### 📊 טבלת האליפות המשפחתית")
+    if all_wc_standings:
+        st.caption("🟢 החיבור לשרתי ה-API פעיל והנתונים מסונכרנים בזמן אמת")
     scores_table = {member: {"משחקים": 0, "בונוס טורניר": 0, "סך הכל": 0} for member in FAMILY_MEMBERS}
     
     if sheet:
