@@ -1,4 +1,3 @@
-
 import streamlit as st
 import requests
 from datetime import date, datetime, timedelta
@@ -24,7 +23,7 @@ def init_connection():
 
 sheet = init_connection()
 
-# 👥 כאן משנים, מוסיפים או מוחקים את שמות המשתתפים במשחק המשפחתי!
+# 👥 שמות המשתתפים המעודכנים של המשפחה!
 FAMILY_MEMBERS = ["נחש ינחש" , "מחליד", "המכשפה" , "צבצב", "יובל המנוול", "הזקן", "רתם המצחין", "עדיאל קורקוס"]
 
 st.markdown("""
@@ -40,11 +39,68 @@ st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל
 username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
 st.write("---")
 
+# 🌍 מילון תרגום רשת מלא לכל 48 הנבחרות כולל וריאציות API רשמיות
 TEAM_TRANSLATION = {
-    "Brazil": "ברזיל 🇧🇷", "France": "צרפת 🇫🇷", "Argentina": "ארגנטינה 🇦🇷",
-    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Spain": "ספרד 🇪🇸", "Germany": "גרמניה 🇩🇪",
-    "Italy": "איטליה 🇮🇹", "Portugal": "פורטוגל 🇵🇹", "Morocco": "מרוקו 🇲🇦", "Japan": "יפן 🇯🇵",
-    "Mexico": "מקסיקו 🇲🇽", "Canada": "קנדה 🇨🇦", "Czech Republic": "צ'כיה 🇨🇿", "Switzerland": "שווייץ 🇨🇭"
+    # בית א'
+    "Mexico": "מקסיקו 🇲🇽",
+    "South Africa": "דרום אפריקה 🇿🇦",
+    "South Korea": "קוריאה הדרומית 🇰🇷", "Korea Republic": "קוריאה הדרומית 🇰🇷", "Korea": "קוריאה הדרומית 🇰🇷",
+    "Czech Republic": "צ'כיה 🇨🇿", "Czechia": "צ'כיה 🇨🇿",
+    # בית ב'
+    "Canada": "קנדה 🇨🇦",
+    "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦",
+    "Qatar": "קטאר 🇶🇦",
+    "Switzerland": "שווייץ 🇨🇭",
+    # בית ג'
+    "Brazil": "ברזיל 🇧🇷",
+    "Morocco": "מרוקו 🇲🇦",
+    "Haiti": "האיטי 🇭🇹",
+    "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    # בית ד'
+    "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸",
+    "Paraguay": "פרגוואי 🇵🇾",
+    "Australia": "אוסטרליה 🇦🇺",
+    "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
+    # בית ה'
+    "Germany": "גרמניה 🇩🇪",
+    "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼",
+    "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮",
+    "Ecuador": "אקוודור 🇪🇨",
+    # בית ו'
+    "Netherlands": "הולנד 🇳🇱",
+    "Japan": "יפן 🇯🇵",
+    "Sweden": "שוודיה 🇸🇪",
+    "Tunisia": "טוניסיה 🇹🇳",
+    # בית ז'
+    "Belgium": "בלגיה 🇧🇪",
+    "Egypt": "מצרים 🇪🇬",
+    "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷",
+    "New Zealand": "ניו זילנד 🇳🇿",
+    # בית ח'
+    "Spain": "ספרד 🇪🇸",
+    "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻",
+    "Saudi Arabia": "ערב הסעודית 🇸🇦",
+    "Uruguay": "אורוגוואי 🇺🇾",
+    # בית ט'
+    "France": "צרפת 🇫🇷",
+    "Senegal": "סנגל 🇸🇳",
+    "Iraq": "עיראק 🇮🇶",
+    "Norway": "נורווגיה 🇳🇴",
+    # בית י'
+    "Argentina": "ארגנטינה 🇦🇷",
+    "Algeria": "אלג'יריה 🇩🇿",
+    "Austria": "אוסטריה 🇦🇹",
+    "Jordan": "ירדן 🇯🇴",
+    # בית י"א
+    "Portugal": "פורטוגל 🇵🇹",
+    "DR Congo": "קונגו הדמוקרטית 🇨🇩", "Congo DR": "קונגו הדמוקרטית 🇨🇩", "Democratic Republic of the Congo": "קונגו הדמוקרטית 🇨🇩",
+    "Uzbekistan": "אוזבקיסטן 🇺🇿",
+    "Colombia": "קולומביה 🇨🇴",
+    # בית י"ב
+    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+    "Croatia": "קרואטיה 🇭🇷",
+    "Ghana": "גאנה 🇬🇭",
+    "Panama": "פנמה 🇵🇦"
 }
 
 def get_team_name_heb(en_name):
@@ -193,8 +249,8 @@ with tab1:
                             
                             existing_row_idx = None
                             for idx, row in enumerate(all_rows):
-                                if idx == 0: continue
-                                if len(row) > 2 and row[1] == username and row[2] == str(m_id):
+                                # ללא כותרות - סורק מהשורה הראשונה ממש
+                                if len(row) > 2 and row[1].strip() == username.strip() and row[2].strip() == str(m_id).strip():
                                     existing_row_idx = idx + 1
                                     break
                             
@@ -256,8 +312,8 @@ with tab2:
                 
                 existing_t_idx = None
                 for idx, row in enumerate(all_t_rows):
-                    if idx == 0: continue
-                    if len(row) > 1 and row[1] == username:
+                    # ללא כותרות - סורק מהשורה הראשונה ממש ומנקה רווחים
+                    if len(row) > 1 and row[1].strip() == username.strip():
                         existing_t_idx = idx + 1
                         break
                         
@@ -276,7 +332,6 @@ with tab3:
     
     if sheet:
         try:
-            # 🧼 ניקוי מוחלט: מעכשיו מושכים אך ורק נתוני אמת מה-API!
             actual_results = {}
             actual_champion = None
             
@@ -298,17 +353,23 @@ with tab3:
                 g_name = group_data.get("group")
                 g_table = group_data.get("table", [])
                 if g_table:
-                    # בודק מי באמת במקום ה-1 כרגע ב-API
                     top_team_en = g_table[0].get("team", {}).get("name")
                     actual_group_winners[g_name] = clean_string(get_team_name_heb(top_team_en))
 
-            # חישוב נקודות משחקים יומיים
+            # חישוב נקודות משחקים יומיים - סורק מהשורה הראשונה (ללא דילוג) וחסין לכותרות עבר
             guesses_sheet = sheet.worksheet("DailyGuesses")
             user_guesses = guesses_sheet.get_all_values()
-            if len(user_guesses) > 1:
-                for row in user_guesses[1:]:
+            if len(user_guesses) > 0:
+                for row in user_guesses:
                     if len(row) < 7: continue
-                    g_user, g_match_id, g_home, g_away, g_joker = row[1], row[2], int(row[4]), int(row[5]), row[6] == "YES"
+                    g_user = row[1]
+                    g_match_id = row[2]
+                    try:
+                        g_home = int(row[4])
+                        g_away = int(row[5])
+                    except ValueError:
+                        continue # מדלג בבטחה אם זו שורת טקסט ישנה או כותרת
+                    g_joker = row[6] == "YES"
                     
                     if g_match_id in actual_results:
                         real = actual_results[g_match_id]
@@ -329,7 +390,7 @@ with tab3:
                         if g_user in scores_table: 
                             scores_table[g_user]["משחקים"] += match_points
 
-            # חישוב אוטומטי של בונוס ראשי בתים + אלופה
+            # חישוב אוטומטי של בונוס ראשי בתים + אלופה - סורק מהשורה הראשונה
             tournament_sheet = sheet.worksheet("TournamentGuesses")
             t_guesses = tournament_sheet.get_all_values()
             
@@ -339,8 +400,8 @@ with tab3:
                 ("GROUP_I", 11), ("GROUP_J", 12), ("GROUP_K", 13), ("GROUP_L", 14)
             ]
             
-            if len(t_guesses) > 1:
-                for row in t_guesses[1:]:
+            if len(t_guesses) > 0:
+                for row in t_guesses:
                     if len(row) < 3: continue 
                     t_user = row[1]
                     if t_user in scores_table:
