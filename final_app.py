@@ -11,24 +11,19 @@ st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="c
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
 
 # פונקציית חיבור נקייה ויציבה לגוגל שיטס
-# פונקציית חיבור מאובטחת לגוגל שיטס - מתקנת שגיאות קריאה בפתיחה
-import traceback
-
-# פונקציית חיבור עם חשיפת שגיאות מלאה (Traceback)
 def init_connection():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds_dict = dict(st.secrets["gcp_service_account"])
         
-        # מתקן את השורות בכל מצב אפשרי
+        # מתקן את קידוד השורות כדי שהמפתח ייקרא בצורה תקינה
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
         
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
     except Exception as e:
-        st.error(f"❌ סוג השגיאה: {type(e).__name__}")
-        st.code(traceback.format_exc())
+        st.error(f"❌ שגיאת תקשורת עם השרת: {e}")
         return None
 
 sheet = init_connection()
@@ -82,6 +77,24 @@ with tab1:
             events = resp.json().get("events", [])
         except:
             events = []
+            
+        # 🧪 בלוק סימולציה זמני לבדיקות - מייצר משחקים פיקטיביים אם ה-API ריק
+        if not events and i == 0:
+            now_utc_ts = int(datetime.now(ZoneInfo("UTC")).timestamp())
+            events = [
+                {
+                    "id": "test_match_1",
+                    "homeTeam": {"name": "Argentina"},
+                    "awayTeam": {"name": "Brazil"},
+                    "startTimestamp": now_utc_ts + 7200  # משחק בעוד שעתיים
+                },
+                {
+                    "id": "test_match_2",
+                    "homeTeam": {"name": "France"},
+                    "awayTeam": {"name": "England"},
+                    "startTimestamp": now_utc_ts + 10800 # משחק בעוד שלוש שעות
+                }
+            ]
             
         if events:
             has_matches = True
@@ -156,7 +169,6 @@ with tab1:
                                 int(data["away_g"]), 
                                 joker_str
                             ]
-                            # שימוש ב-table_range מכריח התחלת סריקה מ-A1 ומניעת קריסה
                             guesses_sheet.append_row(new_row, table_range="A1")
                             
                         st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו בהצלחה בגוגל שיטס!")
@@ -176,7 +188,7 @@ with tab2:
     c1, col_b = st.columns(2)
     with c1:
         st.selectbox("ראשות בית א'", ["ברזיל 🇧🇷", "מקסיקו 🇲🇽", "קולומביה 🇨🇴"])
-        st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦", "דנמרק 🇩🇰"])
+        st.selectbox("ראשות בית ב'", ["צרפת 🇫🇷", "מרוקו 🇲🇦", "דנמרק 🇩קים"])
     with col_b:
         st.selectbox("ראשות בית ג'", ["ארגנטינה 🇦🇷", "יפן 🇯🇵", "שוודיה 🇸🇪"])
         st.selectbox("ראשות בית ד'", ["ספרד 🇪🇸", "גרמניה 🇩🇪", "ארצות הברית 🇺🇸"])
