@@ -1,9 +1,4 @@
 
-### 🛠️ הקוד הסופי והנקי למונדיאל (בלי נתוני דמה!)
-
-העתיקי את הקוד הבא, עדכני את רשימת השמות בשורה 28 למי שאת רוצה, והחליפי את תוכן הקובץ `final_app.py` ב-GitHub. מעכשיו הטבלה תהיה מאופסת, נקייה ומוכנה על 0:
-
-```python
 import streamlit as st
 import requests
 from datetime import date, datetime, timedelta
