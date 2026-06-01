@@ -61,6 +61,23 @@ HEADERS = {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": "sportapi7.p.rapidapi.c
 IL_TZ = ZoneInfo("Asia/Jerusalem")
 now_il = datetime.now(IL_TZ)
 
+# הגדרת הבתים הרשמית (מתוך הרשימה שלך)
+teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
+teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
+teams_c = ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"]
+teams_d = ["ארצות הברית 🇺🇸", "פרגוואי 🇵🇾", "אוסטרליה 🇦🇺", "טורקיה 🇹🇷"]
+teams_e = ["גרמניה 🇩🇪", "קוראסאו 🇨🇼", "חוף השנהב 🇨🇮", "אקוודור 🇪🇨"]
+teams_f = ["הולנד 🇳🇱", "יפן 🇯🇵", "שוודיה 🇸🇪", "טוניסיה 🇹🇳"]
+teams_g = ["בלגיה 🇧🇪", "מצרים 🇪🇬", "איראן 🇮🇷", "ניו זילנד 🇳🇿"]
+teams_h = ["ספרד 🇪🇸", "כף ורדה 🇨🇻", "ערב הסעודית 🇸🇦", "אורוגוואי 🇺🇾"]
+teams_i = ["צרפת 🇫🇷", "סנגל 🇸🇳", "עיראק 🇮🇶", "נורווגיה 🇳🇴"]
+teams_j = ["ארגנטינה 🇦🇷", "אלג'יריה 🇩🇿", "אוסטריה 🇦🇹", "ירדן 🇯🇴"]
+teams_k = ["פורטוגל 🇵🇹", "קונגו הדמוקרטית 🇨🇩", "אוזבקיסטן 🇺🇿", "קולומביה 🇨🇴"]
+teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה 🇵🇦"]
+
+# יצירה אוטומטית של רשימת כל 48 הנבחרות הייחודיות, ממוינות אלפביתית למסך האלופה
+ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
+
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
 
 with tab1:
@@ -176,35 +193,29 @@ with tab2:
     st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
     st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
     
-    # כל המועמדות הגדולות לבחירת האלופה
-    CHAMP_OPTIONS = [
-        "ארגנטינה 🇦🇷", "ברזיל 🇧🇷", "צרפת 🇫🇷", "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ספרד 🇪🇸", 
-        "גרמניה 🇩🇪", "פורטוגל 🇵🇹", "איטליה 🇮🇹", "הולנד 🇳🇱", "מרוקו 🇲🇦", 
-        "אורוגוואי 🇺🇾", "קולומביה 🇨🇴", "קרואטיה 🇭🇷", "בלגיה 🇧🇪", "יפן 🇯🇵", "ארה\"ב 🇺🇸"
-    ]
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", CHAMP_OPTIONS)
+    # שימוש ברשימה המלאה והמסודרת של כל 48 הנבחרות
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS)
     st.write("---")
     
     st.markdown("#### ⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)")
     
-    # חלוקת 12 הבתים המדויקת שסיפקת עם דגלים
     col1, col2 = st.columns(2)
     
     with col1:
-        group_a = st.selectbox("ראשות בית א'", ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"])
-        group_b = st.selectbox("ראשות בית ב'", ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"])
-        group_c = st.selectbox("ראשות בית ג'", ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"])
-        group_d = st.selectbox("ראשות בית ד'", ["ארצות הברית 🇺🇸", "פרגוואי 🇵🇾", "אוסטרליה 🇦🇺", "טוריקיה 🇹🇷"])
-        group_e = st.selectbox("ראשות בית ה'", ["גרמניה 🇩🇪", "קוראסאו 🇨🇼", "חוף השנהב 🇨🇮", "אקוודור 🇪🇨"])
-        group_f = st.selectbox("ראשות בית ו'", ["הולנד 🇳🇱", "יפן 🇯🇵", "שוודיה 🇸🇪", "טוניסיה 🇹🇳"])
+        group_a = st.selectbox("ראשות בית א'", teams_a)
+        group_b = st.selectbox("ראשות בית ב'", teams_b)
+        group_c = st.selectbox("ראשות בית ג'", teams_c)
+        group_d = st.selectbox("ראשות בית ד'", teams_d)
+        group_e = st.selectbox("ראשות בית ה'", teams_e)
+        group_f = st.selectbox("ראשות בית ו'", teams_f)
 
     with col2:
-        group_g = st.selectbox("ראשות בית ז'", ["בלגיה 🇧🇪", "מצרים 🇪🇬", "איראן 🇮🇷", "ניו זילנד 🇳🇿"])
-        group_h = st.selectbox("ראשות בית ח'", ["ספרד 🇪🇸", "כף ורדה 🇨🇻", "ערב הסעודית 🇸🇦", "אורוגוואי 🇺🇾"])
-        group_i = st.selectbox("ראשות בית ט'", ["צרפת 🇫🇷", "sנגל 🇸🇳", "עיראק 🇮🇶", "נורווגיה 🇳🇴"])
-        group_j = st.selectbox("ראשות בית י'", ["ארגנטינה 🇦🇷", "אלג'יריה 🇩🇿", "אוסטריה 🇦🇹", "ירדן 🇯🇴"])
-        group_k = st.selectbox("ראשות בית י\"א", ["פורטוגל 🇵🇹", "קונגו הדמוקרטית 🇨🇩", "אוזבקיסטן 🇺🇿", "קולומביה 🇨🇴"])
-        group_l = st.selectbox("ראשות בית י\"ב", ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה 🇵🇦"])
+        group_g = st.selectbox("ראשות בית ז'", teams_g)
+        group_h = st.selectbox("ראשות בית ח'", teams_h)
+        group_i = st.selectbox("ראשות בית ט'", teams_i)
+        group_j = st.selectbox("ראשות בית י'", teams_j)
+        group_k = st.selectbox("ראשות בית י\"א", teams_k)
+        group_l = st.selectbox("ראשות בית י\"ב", teams_l)
 
     st.write("---")
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח"):
@@ -212,12 +223,10 @@ with tab2:
             try:
                 tournament_sheet = sheet.worksheet("TournamentGuesses")
                 
-                # יצירת שורת כותרת מורחבת לכל 12 הבתים במידה והגיליון ריק
                 if len(tournament_sheet.get_all_values()) == 0:
                     headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
                     tournament_sheet.append_row(headers, table_range="A1")
                 
-                # שורת הנתונים המלאה של המשתמש
                 t_row = [
                     datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
                     username, champ, group_a, group_b, group_c, group_d, group_e, group_f, group_g, group_h, group_i, group_j, group_k, group_l
