@@ -10,8 +10,6 @@ st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="c
 # קישור הטבלה שלך
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
 
-# פונקציית חיבור מאובטחת לגוגל שיטס - כולל הדפסת שגיאה מפורטת
-# פונקציית חיבור מאובטחת לגוגל שיטס - מתוקנת ומעוקפת חסימה
 # פונקציית חיבור נקייה ויציבה לגוגל שיטס
 def init_connection():
     try:
@@ -132,15 +130,29 @@ with tab1:
                 if sheet:
                     try:
                         guesses_sheet = sheet.worksheet("DailyGuesses")
+                        
+                        # בדיקה אם הגיליון ריק לחלוטין ויצירת כותרות
+                        if len(guesses_sheet.get_all_values()) == 0:
+                            guesses_sheet.append_row(["Timestamp", "Username", "Match ID", "Match Name", "Home Goals", "Away Goals", "Joker"], table_range="A1")
+                            
                         for m_id, data in guess_inputs.items():
                             joker_str = "YES" if data["joker"] else "NO"
-                            guesses_sheet.append_row([
+                            
+                            new_row = [
                                 datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-                                username, m_id, data["name"], data["home_g"], data["away_g"], joker_str
-                            ])
+                                username, 
+                                str(m_id), 
+                                str(data["name"]), 
+                                int(data["home_g"]), 
+                                int(data["away_g"]), 
+                                joker_str
+                            ]
+                            # שימוש ב-table_range מכריח התחלת סריקה מ-A1 ומניעת קריסה
+                            guesses_sheet.append_row(new_row, table_range="A1")
+                            
                         st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו בהצלחה בגוגל שיטס!")
                     except Exception as e:
-                        st.error(f"שגיאה בשמירה לטבלה: {e}")
+                        st.error(f"❌ שגיאה בשמירה לטבלה: {e}")
                 else:
                     st.warning("⚠️ הניחוש תקין, אך לא נשמר בטבלה. בדקי את הודעת השגיאה למעלה.")
     else:
