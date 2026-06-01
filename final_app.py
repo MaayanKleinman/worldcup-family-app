@@ -15,10 +15,7 @@ def init_connection():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         creds_dict = dict(st.secrets["gcp_service_account"])
-        
-        # מתקן את קידוד השורות כדי שהמפתח ייקרא בצורה תקינה
         creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
-        
         creds = Credentials.from_service_account_info(creds_dict, scopes=scope)
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
@@ -41,7 +38,6 @@ st.markdown("""
 
 st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל 2026 - המשפחה 🏆</h1>", unsafe_allow_html=True)
 
-# בחירת המנחש בחלק העליון
 username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
 st.write("---")
 
@@ -61,7 +57,17 @@ HEADERS = {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": "sportapi7.p.rapidapi.c
 IL_TZ = ZoneInfo("Asia/Jerusalem")
 now_il = datetime.now(IL_TZ)
 
-# הגדרת הבתים הרשמית (מתוך הרשימה שלך)
+# 🔒 מנגנון ה-Cache החכם: שומר את תוצאות ה-API בזיכרון ל-10 דקות (600 שניות) כדי למנוע בזבוז קריאות
+@st.cache_data(ttl=600)
+def fetch_matches_from_api(target_date):
+    try:
+        url = f"{BASE_URL}/api/v1/sport/football/scheduled-events/{target_date}"
+        resp = requests.get(url, headers=HEADERS)
+        return resp.json().get("events", [])
+    except:
+        return []
+
+# הגדרת הבתים הרשמית לטאב 2
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
 teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
 teams_c = ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"]
@@ -75,7 +81,6 @@ teams_j = ["ארגנטינה 🇦🇷", "אלג'יריה 🇩🇿", "אוסטר�
 teams_k = ["פורטוגל 🇵🇹", "קונגו הדמוקרטית 🇨🇩", "אוזבקיסטן 🇺🇿", "קולומביה 🇨🇴"]
 teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה 🇵🇦"]
 
-# יצירה אוטומטית של רשימת כל 48 הנבחרות הייחודיות, ממוינות אלפביתית למסך האלופה
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
@@ -91,29 +96,15 @@ with tab1:
         target_date = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
         
-        try:
-            url = f"{BASE_URL}/api/v1/sport/football/scheduled-events/{target_date}"
-            resp = requests.get(url, headers=HEADERS)
-            events = resp.json().get("events", [])
-        except:
-            events = []
+        # קריאה לפונקציה השמורה ב-Cache במקום פנייה ישירה לשרת
+        events = fetch_matches_from_api(target_date)
             
-        # בלוק סימולציה זמני לבדיקות
+        # בלוק סימולציה זמני לבדיקות (יימחק כשהטורניר יתחיל)
         if not events and i == 0:
             now_utc_ts = int(datetime.now(ZoneInfo("UTC")).timestamp())
             events = [
-                {
-                    "id": "test_match_1",
-                    "homeTeam": {"name": "Argentina"},
-                    "awayTeam": {"name": "Brazil"},
-                    "startTimestamp": now_utc_ts + 7200
-                },
-                {
-                    "id": "test_match_2",
-                    "homeTeam": {"name": "France"},
-                    "awayTeam": {"name": "England"},
-                    "startTimestamp": now_utc_ts + 10800
-                }
+                {"id": "test_match_1", "homeTeam": {"name": "Argentina"}, "awayTeam": {"name": "Brazil"}, "startTimestamp": now_utc_ts + 7200},
+                {"id": "test_match_2", "homeTeam": {"name": "France"}, "awayTeam": {"name": "England"}, "startTimestamp": now_utc_ts + 10800}
             ]
             
         if events:
@@ -149,12 +140,8 @@ with tab1:
                 
                 if not is_locked:
                     guess_inputs[match_id] = {
-                        "home_g": h_input, 
-                        "away_g": a_input, 
-                        "joker": j_check, 
-                        "name": f"{home_en} vs {away_en}",
-                        "total_games_day": total_games_today,
-                        "date": target_date
+                        "home_g": h_input, "away_g": a_input, "joker": j_check, 
+                        "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today, "date": target_date
                     }
                 st.write("---")
 
@@ -171,8 +158,11 @@ with tab1:
                 if sheet:
                     try:
                         guesses_sheet = sheet.worksheet("DailyGuesses")
-                        if len(guesses_sheet.get_all_values()) == 0:
+                        all_rows = guesses_sheet.get_all_values()
+                        
+                        if len(all_rows) == 0:
                             guesses_sheet.append_row(["Timestamp", "Username", "Match ID", "Match Name", "Home Goals", "Away Goals", "Joker"], table_range="A1")
+                            all_rows = guesses_sheet.get_all_values()
                             
                         for m_id, data in guess_inputs.items():
                             joker_str = "YES" if data["joker"] else "NO"
@@ -180,27 +170,37 @@ with tab1:
                                 datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
                                 username, str(m_id), str(data["name"]), int(data["home_g"]), int(data["away_g"]), joker_str
                             ]
-                            guesses_sheet.append_row(new_row, table_range="A1")
-                        st.success(f"🎉 כל הכבוד {username}! הניחושים שלך נשמרו בהצלחה!")
+                            
+                            # 🔄 מנגנון ה-Upsert: מחפש האם קיים כבר ניחוש של המשתמש למשחק הספציפי הזה
+                            existing_row_idx = None
+                            for idx, row in enumerate(all_rows):
+                                if idx == 0: continue
+                                if len(row) > 2 and row[1] == username and row[2] == str(m_id):
+                                    existing_row_idx = idx + 1  # המרה לאינדקס של גוגל (מתחיל מ-1)
+                                    break
+                            
+                            if existing_row_idx:
+                                # עדכון השורה הקיימת (דריסה) במקום הוספת שורה חדשה
+                                guesses_sheet.update(f"A{existing_row_idx}:G{existing_row_idx}", [new_row])
+                            else:
+                                # הוספת שורה חדשה אם המשתמש מנחש את המשחק הזה לראשונה
+                                guesses_sheet.append_row(new_row, table_range="A1")
+                                
+                        st.success(f"🎉 כל הכבוד {username}! הניחושים שלך עודכנו בהצלחה בטבלה!")
                     except Exception as e:
-                        st.error(f"❌ שגיאה בשמירה לטבלה: {e}")
+                        st.error(f"❌: {e}")
                 else:
                     st.warning("⚠️ אין חיבור לטבלה.")
-    else:
-        st.info("אין משחקים קרובים בטווח של יומיים קדימה.")
 
 with tab2:
     st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
     st.info("🔒 חלק זה יינעל אוטומטית עם שריקת הפתיחה של המונדיאל!")
     
-    # שימוש ברשימה המלאה והמסודרת של כל 48 הנבחרות
     champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS)
     st.write("---")
-    
     st.markdown("#### ⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)")
     
     col1, col2 = st.columns(2)
-    
     with col1:
         group_a = st.selectbox("ראשות בית א'", teams_a)
         group_b = st.selectbox("ראשות בית ב'", teams_b)
@@ -208,7 +208,6 @@ with tab2:
         group_d = st.selectbox("ראשות בית ד'", teams_d)
         group_e = st.selectbox("ראשות בית ה'", teams_e)
         group_f = st.selectbox("ראשות בית ו'", teams_f)
-
     with col2:
         group_g = st.selectbox("ראשות בית ז'", teams_g)
         group_h = st.selectbox("ראשות בית ח'", teams_h)
@@ -222,21 +221,34 @@ with tab2:
         if sheet:
             try:
                 tournament_sheet = sheet.worksheet("TournamentGuesses")
+                all_t_rows = tournament_sheet.get_all_values()
                 
-                if len(tournament_sheet.get_all_values()) == 0:
+                if len(all_t_rows) == 0:
                     headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
                     tournament_sheet.append_row(headers, table_range="A1")
+                    all_t_rows = tournament_sheet.get_all_values()
                 
                 t_row = [
                     datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
                     username, champ, group_a, group_b, group_c, group_d, group_e, group_f, group_g, group_h, group_i, group_j, group_k, group_l
                 ]
-                tournament_sheet.append_row(t_row, table_range="A1")
-                st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך (כולל כל 12 הבתים) נשמרו בטבלה!")
+                
+                # 🔄 Upsert גם לניחושי הטורניר: מונע כפילויות של המשתמש
+                existing_t_idx = None
+                for idx, row in enumerate(all_t_rows):
+                    if idx == 0: continue
+                    if len(row) > 1 and row[1] == username:
+                        existing_t_idx = idx + 1
+                        break
+                        
+                if existing_t_idx:
+                    tournament_sheet.update(f"A{existing_t_idx}:O{existing_t_idx}", [t_row])
+                else:
+                    tournament_sheet.append_row(t_row, table_range="A1")
+                    
+                st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך עודכנו בטבלה!")
             except Exception as e:
                 st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
-        else:
-            st.error("⚠️ השרת אינו מחובר לגוגל שיטס.")
 
 with tab3:
     st.subheader("📊 טבלת האליפות המשפחתית")
