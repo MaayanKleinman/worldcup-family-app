@@ -1,3 +1,10 @@
+---
+
+### 🛠️ הקוד הסופי והנקי למונדיאל (בלי נתוני דמה!)
+
+העתיקי את הקוד הבא, עדכני את רשימת השמות בשורה 28 למי שאת רוצה, והחליפי את תוכן הקובץ `final_app.py` ב-GitHub. מעכשיו הטבלה תהיה מאופסת, נקייה ומוכנה על 0:
+
+```python
 import streamlit as st
 import requests
 from datetime import date, datetime, timedelta
@@ -22,6 +29,8 @@ def init_connection():
         return None
 
 sheet = init_connection()
+
+# 👥 כאן משנים, מוסיפים או מוחקים את שמות המשתתפים במשחק המשפחתי!
 FAMILY_MEMBERS = ["אבא", "אמא", "מאיה", "דני", "נועם"]
 
 st.markdown("""
@@ -57,7 +66,6 @@ HEADERS = {"X-Auth-Token": TOKEN}
 IL_TZ = ZoneInfo("Asia/Jerusalem")
 now_il = datetime.now(IL_TZ)
 
-# 🔒 מועד תחילת הטורניר הרשמי לנעילת הניחושים ארוכי הטווח
 TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
 is_tournament_started = now_il >= TOURNAMENT_START_TIME
 
@@ -97,8 +105,6 @@ teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷
 
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
-target_date_str = now_il.strftime("%Y-%m-%d")
-
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
 
 with tab1:
@@ -120,18 +126,6 @@ with tab1:
                 match_time_il = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
                 if match_time_il.strftime("%Y-%m-%d") == current_loop_date_str:
                     daily_events.append(m)
-        
-        if not daily_events and i == 0:
-            daily_events = [
-                {
-                    "id": "test_match_1", "homeTeam": {"name": "Argentina"}, "awayTeam": {"name": "Brazil"}, 
-                    "utcDate": current_loop_date_str + "T12:00:00Z", "status": "FINISHED", "score": {"fullTime": {"home": 2, "away": 1}}
-                },
-                {
-                    "id": "test_match_2", "homeTeam": {"name": "Mexico"}, "awayTeam": {"name": "Czech Republic"}, 
-                    "utcDate": current_loop_date_str + "T23:59:00Z", "status": "TIMED", "score": {"fullTime": {"home": None, "away": None}}
-                }
-            ]
             
         if daily_events:
             st.markdown(f"### 📅 משחקי {date_label} ({current_loop_date_str.split('-')[2]}/{current_loop_date_str.split('-')[1]}):")
@@ -218,6 +212,8 @@ with tab1:
                         st.success(f"🎉 כל הכבוד {username}! הניחושים שלך עודכנו בהצלחה בטבלה!")
                     except Exception as e:
                         st.error(f"❌ שגיאה בשמירה: {e}")
+    else:
+        st.info("אין משחקים פתוחים לניחוש כרגע בטווח הימים הקרוב.")
 
 with tab2:
     st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
@@ -286,6 +282,7 @@ with tab3:
     
     if sheet:
         try:
+            # 🧼 ניקוי מוחלט: מעכשיו מושכים אך ורק נתוני אמת מה-API!
             actual_results = {}
             actual_champion = None
             
@@ -302,26 +299,16 @@ with tab3:
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
-            # 🔄 קביעת מקור טבלאות הבתים: אם הטורניר טרם החל, נכריח את המערכת להשתמש בנתוני הטסט של מקסיקו וקנדה!
             actual_group_winners = {}
-            if not is_tournament_started:
-                actual_results["test_match_1"] = {"home": 2, "away": 1}
-                actual_champion = clean_string("ארגנטינה 🇦🇷")
-                current_standings = [
-                    {"group": "GROUP_A", "table": [{"position": 1, "team": {"name": "Mexico"}}]},
-                    {"group": "GROUP_B", "table": [{"position": 1, "team": {"name": "Canada"}}]}
-                ]
-            else:
-                current_standings = all_wc_standings
-                
-            for group_data in current_standings:
+            for group_data in all_wc_standings:
                 g_name = group_data.get("group")
                 g_table = group_data.get("table", [])
                 if g_table:
+                    # בודק מי באמת במקום ה-1 כרגע ב-API
                     top_team_en = g_table[0].get("team", {}).get("name")
                     actual_group_winners[g_name] = clean_string(get_team_name_heb(top_team_en))
 
-            # 3. חישוב נקודות משחקים יומיים
+            # חישוב נקודות משחקים יומיים
             guesses_sheet = sheet.worksheet("DailyGuesses")
             user_guesses = guesses_sheet.get_all_values()
             if len(user_guesses) > 1:
@@ -348,7 +335,7 @@ with tab3:
                         if g_user in scores_table: 
                             scores_table[g_user]["משחקים"] += match_points
 
-            # 4. חישוב אוטומטי של בונוס ראשי בתים + אלופה
+            # חישוב אוטומטי של בונוס ראשי בתים + אלופה
             tournament_sheet = sheet.worksheet("TournamentGuesses")
             t_guesses = tournament_sheet.get_all_values()
             
