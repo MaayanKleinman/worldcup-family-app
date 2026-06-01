@@ -32,7 +32,7 @@ def safe_update(worksheet, range_name, values):
         except Exception as e:
             st.error(f"❌ שגיאה בעדכון השורה בשיטס: {e}")
 
-# 👥 שמות המשתתפים המעודכנים והמצחיקים שלכם!
+# 👥 שמות המשתתפים המעודכנים של המשפחה
 FAMILY_MEMBERS = ["נחש ינחש" , "מחליד", "המכשפה" , "צבצב", "יובל המנוול", "הזקן", "רתם המצחין", "עדיאל קורקוס"]
 
 st.markdown("""
@@ -48,68 +48,11 @@ st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל
 username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
 st.write("---")
 
-# 🌍 מילון תרגום מתוקן הרמטית לפי הנתונים הגולמיים של ה-API
 TEAM_TRANSLATION = {
-    # בית א'
-    "Mexico": "מקסיקו 🇲🇽",
-    "South Africa": "דרום אפריקה 🇿🇦",
-    "South Korea": "קוריאה הדרומית 🇰🇷", "Korea Republic": "קוריאה הדרומית 🇰🇷", "Korea": "קוריאה הדרומית 🇰🇷",
-    "Czech Republic": "צ'כיה 🇨🇿", "Czechia": "צ'כיה 🇨🇿",
-    # בית ב'
-    "Canada": "קנדה 🇨🇦",
-    "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦", "Bosnia-Herzegovina": "בוסניה והרצגובינה 🇧🇦",
-    "Qatar": "קטאר 🇶🇦",
-    "Switzerland": "שווייץ 🇨🇭",
-    # בית ג'
-    "Brazil": "ברזיל 🇧🇷",
-    "Morocco": "מרוקו 🇲🇦",
-    "Haiti": "האיטי 🇭🇹",
-    "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-    # בית ד'
-    "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸",
-    "Paraguay": "פרגוואי 🇵🇾",
-    "Australia": "אוסטרליה 🇦🇺",
-    "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
-    # בית ה'
-    "Germany": "גרמניה 🇩🇪",
-    "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼",
-    "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮",
-    "Ecuador": "אקוודור 🇪🇨",
-    # בית ו'
-    "Netherlands": "הולנד 🇳🇱",
-    "Japan": "יפן 🇯🇵",
-    "Sweden": "שוודיה 🇸🇪",
-    "Tunisia": "טוניסיה 🇹🇳",
-    # בית ז'
-    "Belgium": "בלגיה 🇧🇪",
-    "Egypt": "מצרים 🇪🇬",
-    "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷",
-    "New Zealand": "ניו זילנד 🇳🇿",
-    # בית ח'
-    "Spain": "ספרד 🇪🇸",
-    "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻",
-    "Saudi Arabia": "ערב הסעודית 🇸🇦",
-    "Uruguay": "אורוגוואי 🇺🇾",
-    # בית ט'
-    "France": "צרפת 🇫🇷",
-    "Senegal": "סנגל 🇸🇳",
-    "Iraq": "עיראק 🇮🇶",
-    "Norway": "נורווגיה 🇳🇴",
-    # בית י'
-    "Argentina": "ארגנטינה 🇦🇷",
-    "Algeria": "אלג'יריה 🇩🇿",
-    "Austria": "אוסטריה 🇦🇹",
-    "Jordan": "ירדן 🇯🇴",
-    # בית י"א
-    "Portugal": "פורטוגל 🇵🇹",
-    "DR Congo": "קונגו הדמוקרטית 🇨🇩", "Congo DR": "קונגו הדמוקרטית 🇨🇩", "Democratic Republic of the Congo": "קונגו הדמוקרטית 🇨🇩",
-    "Uzbekistan": "אוזבקיסטן 🇺🇿",
-    "Colombia": "קולומביה 🇨🇴",
-    # בית י"ב
-    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    "Croatia": "קרואטיה 🇭🇷",
-    "Ghana": "גאנה 🇬🇭",
-    "Panama": "פנמה 🇵🇦"
+    "Brazil": "ברזיל 🇧🇷", "France": "צרפת 🇫🇷", "Argentina": "ארגנטינה 🇦🇷",
+    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Spain": "ספרד 🇪🇸", "Germany": "גרמניה 🇩🇪",
+    "Italy": "איטליה 🇮🇹", "Portugal": "פורטוגל 🇵🇹", "Morocco": "מרוקו 🇲🇦", "Japan": "יפן 🇯🇵",
+    "Mexico": "מקסיקו 🇲🇽", "Canada": "קנדה 🇨🇦", "Czech Republic": "צ'כיה 🇨🇿", "Switzerland": "שווייץ 🇨🇭"
 }
 
 def get_team_name_heb(en_name):
@@ -146,11 +89,24 @@ def fetch_world_cup_standings():
     except:
         return []
 
+# 🧪 פונקציית טסט מיוחדת: מושכת משחקים אמיתיים שהסתיימו מהליגה האנגלית לצורך בדיקת חיים
+@st.cache_data(ttl=120)
+def fetch_test_premier_league_matches():
+    try:
+        url = "https://api.football-data.org/v4/competitions/PL/matches"
+        resp = requests.get(url, headers=HEADERS)
+        matches = resp.json().get("matches", [])
+        finished = [m for m in matches if m.get("status") == "FINISHED"]
+        return finished[-3:] # לוקח את 3 המשחקים האחרונים שהסתיימו באמת
+    except:
+        return []
+
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
+test_pl_matches = fetch_test_premier_league_matches()
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
-teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨חש"]
+teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
 teams_c = ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"]
 teams_d = ["ארצות הברית 🇺🇸", "פרגוואי 🇵🇾", "אוסטרליה 🇦🇺", "טורקיה 🇹🇷"]
 teams_e = ["גרמניה 🇩🇪", "קוראסאו 🇨🇼", "חוף השנהב 🇨🇮", "אקוודור 🇪🇨"]
@@ -160,11 +116,11 @@ teams_h = ["ספרד 🇪🇸", "כף ורדה 🇨🇻", "ערב הסעודית
 teams_i = ["צרפת 🇫🇷", "סנגל 🇸🇳", "עיראק 🇮🇶", "נורווגיה 🇳🇴"]
 teams_j = ["ארגנטינה 🇦🇷", "אלג'יריה 🇩🇿", "אוסטריה 🇦🇹", "ירדן 🇯🇴"]
 teams_k = ["פורטוגל 🇵🇹", "קונגו הדמוקרטית 🇨🇩", "אוזבקיסטן 🇺🇿", "קולומביה 🇨🇴"]
-teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה פנמה 🇵🇦"]
+teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷", "גאנה 🇬🇭", "פנמה 🇵🇦"]
 
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
-tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
+tab1, tab2, tab3, tab4 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים", "🧪 מעבדת טסטים בלייב"])
 
 with tab1:
     st.markdown("<div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; border-right: 5px solid #e61d25; color: #b30000; font-weight: bold;'>⚠️ שימו לב: הניחוש תקף ל-90 דקות משחק בלבד! (כולל תוספת זמן פציעות, לא כולל הארכות ופנדלים)</div>", unsafe_allow_html=True)
@@ -244,9 +200,6 @@ with tab1:
                     try:
                         guesses_sheet = sheet.worksheet("DailyGuesses")
                         all_rows = guesses_sheet.get_all_values()
-                        
-                        u_idx = 1 
-                        m_idx = 2 
                             
                         for m_id, data in guess_inputs.items():
                             joker_str = "YES" if data["joker"] else "NO"
@@ -334,8 +287,6 @@ with tab2:
 
 with tab3:
     st.markdown("### 📊 טבלת האליפות המשפחתית")
-    if all_wc_standings:
-        st.caption("🟢 החיבור לשרתי ה-API פעיל והנתונים מסונכרנים בזמן אמת")
     scores_table = {member: {"משחקים": 0, "בונוס טורניר": 0, "סך הכל": 0} for member in FAMILY_MEMBERS}
     
     if sheet:
@@ -356,6 +307,12 @@ with tab3:
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
+            # 🧪 הזרקת תוצאות האמת של הליגה האנגלית משרתי ה-API לתוך מנגנון החישוב לצורך בדיקת חיות
+            for m in test_pl_matches:
+                full_time = m.get("score", {}).get("fullTime", {})
+                if full_time.get("home") is not None and full_time.get("away") is not None:
+                    actual_results[str(m.get("id"))] = {"home": int(full_time.get("home")), "away": int(full_time.get("away"))}
+
             actual_group_winners = {}
             for group_data in all_wc_standings:
                 g_name = group_data.get("group")
@@ -435,3 +392,59 @@ with tab3:
     formatted_data = [{"משתמש": m, "⚽ נקודות משחקים": d["משחקים"], "🏆 בונוס טורניר": d["בונוס טורניר"], "🔥 סך הכל": d["סך הכל"]} for m, d in scores_table.items()]
     formatted_data = sorted(formatted_data, key=lambda x: x["🔥 סך הכל"], reverse=True)
     st.table(formatted_data)
+
+# 🧪 טאב 4 החדש - נועד אך ורק כדי להרגיע אותך ולהראות לך שה-API עובד חי על משחקים שהסתיימו באמת!
+with tab4:
+    st.markdown("### 🧪 מעבדת טסטים חיים (ליגה אנגלית)")
+    st.write("כאן תוכלי לבצע 'בדיקה על רטוב'. המשחקים למטה מגיעים ישירות משרתי ה-API עם תוצאות האמת הסופיות שלהם!")
+    
+    test_guess_inputs = {}
+    if test_pl_matches:
+        for match in test_pl_matches:
+            match_id = match.get("id")
+            home_name = match.get("homeTeam", {}).get("name")
+            away_name = match.get("awayTeam", {}).get("name")
+            
+            score_home = match.get("score", {}).get("fullTime", {}).get("home")
+            score_away = match.get("score", {}).get("fullTime", {}).get("away")
+            
+            st.markdown(f"#### 🏟️ {home_name} נגד {away_name}")
+            st.caption(f"🏁 משחק אמת שהסתיים ב-API! תוצאה רשמית מהשרת: {score_home} - {score_away}")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                h_in = st.number_input(f"ניחוש שערים ל-{home_name}", min_value=0, max_value=10, step=1, key=f"test_h_{match_id}")
+            with col2:
+                a_in = st.number_input(f"ניחוש שערים ל-{away_name}", min_value=0, max_value=10, step=1, key=f"test_a_{match_id}")
+                
+            test_guess_inputs[match_id] = {"home_g": h_in, "away_g": a_in, "name": f"{home_name} vs {away_name}"}
+            st.write("---")
+            
+        if st.button("🚀 שלח ניחוש בדיקה לשיטס ותחשב ניקוד חי!"):
+            if sheet:
+                try:
+                    guesses_sheet = sheet.worksheet("DailyGuesses")
+                    all_rows = guesses_sheet.get_all_values()
+                    
+                    for m_id, data in test_guess_inputs.items():
+                        new_row = [
+                            datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                            username, str(m_id), str(data["name"]), int(data["home_g"]), int(data["away_g"]), "NO"
+                        ]
+                        
+                        existing_row_idx = None
+                        for idx, row in enumerate(all_rows):
+                            if len(row) > 2 and row[1].strip() == username.strip() and row[2].strip() == str(m_id).strip():
+                                existing_row_idx = idx + 1
+                                break
+                        
+                        if existing_row_idx:
+                            guesses_sheet.update(f"A{existing_row_idx}:G{existing_row_idx}", [new_row])
+                        else:
+                            guesses_sheet.append_row(new_row, table_range="A1")
+                            
+                    st.success("🎉 הניחוש נשמר בגיליון! עברי עכשיו לטאב 3 ותראי איך הטבלה חישבה לך את הנקודות אוטומטית לפי תוצאת האמת מה-API!")
+                except Exception as e:
+                    st.error(f"שגיאה: {e}")
+    else:
+        st.warning("לא הצלחתי למשוך נתוני ליגה אנגלית כרגע מהשרת.")
