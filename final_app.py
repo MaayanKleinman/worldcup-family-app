@@ -7,10 +7,8 @@ from google.oauth2.service_account import Credentials
 
 st.set_page_config(page_title="מונדיאל 2026", page_icon="🏆", layout="centered")
 
-# קישור הטבלה שלך
 GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/1BQ-O0iSj-mnTCtS8LUY-IS65suAahVdO0mY7Ej0seYQ/edit?gid=0#gid=0"
 
-# פונקציית חיבור נקייה ויציבה לגוגל שיטס
 def init_connection():
     try:
         scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
@@ -20,12 +18,10 @@ def init_connection():
         client = gspread.authorize(creds)
         return client.open_by_url(GOOGLE_SHEET_URL)
     except Exception as e:
-        st.error(f"❌ שגיאת תקשורת עם השרת: {e}")
+        st.error(f"❌ שגיאת תקשורת עם גוגל שיטס: {e}")
         return None
 
 sheet = init_connection()
-
-# שמות בני המשפחה
 FAMILY_MEMBERS = ["אבא", "אמא", "מאיה", "דני", "נועם"]
 
 st.markdown("""
@@ -44,30 +40,45 @@ st.write("---")
 TEAM_TRANSLATION = {
     "Brazil": "ברזיל 🇧🇷", "France": "צרפת 🇫🇷", "Argentina": "ארגנטינה 🇦🇷",
     "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Spain": "ספרד 🇪🇸", "Germany": "גרמניה 🇩🇪",
-    "Italy": "איטליה 🇮🇹", "Portugal": "פורטוגל 🇵🇹", "Morocco": "מרוקו 🇲🇦", "Japan": "יפן 🇯🇵"
+    "Italy": "איטליה 🇮🇹", "Portugal": "פורטוגל 🇵🇹", "Morocco": "מרוקו 🇲🇦", "Japan": "יפן 🇯🇵",
+    "Mexico": "מקסיקו 🇲🇽", "Canada": "קנדה 🇨🇦", "Czech Republic": "צ'כיה 🇨🇿", "Switzerland": "שווייץ 🇨🇭"
 }
 
 def get_team_name_heb(en_name):
     return TEAM_TRANSLATION.get(en_name, en_name)
 
-API_KEY = "7f43ad9046msh5f15cf89c2479d2p13156ejsn65430696c85b"
-BASE_URL = "https://sportapi7.p.rapidapi.com"
-HEADERS = {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": "sportapi7.p.rapidapi.com"}
+def clean_string(text):
+    if not text: return ""
+    return "".join([c for c in text if c.isalnum()]).lower()
+
+TOKEN = st.secrets["football_data_token"]
+HEADERS = {"X-Auth-Token": TOKEN}
 
 IL_TZ = ZoneInfo("Asia/Jerusalem")
 now_il = datetime.now(IL_TZ)
 
-# 🔒 מנגנון ה-Cache החכם: שומר את תוצאות ה-API בזיכרון ל-10 דקות (600 שניות) כדי למנוע בזבוז קריאות
-@st.cache_data(ttl=600)
-def fetch_matches_from_api(target_date):
+# ⏱️ רענון מהיר וחכם - ה-Cache נשמר ל-120 שניות (2 דקות) בלבד! עדכון מהיר בלי לחסום את ה-API
+@st.cache_data(ttl=120)
+def fetch_world_cup_matches():
     try:
-        url = f"{BASE_URL}/api/v1/sport/football/scheduled-events/{target_date}"
+        url = "https://api.football-data.org/v4/competitions/WC/matches"
         resp = requests.get(url, headers=HEADERS)
-        return resp.json().get("events", [])
+        return resp.json().get("matches", [])
     except:
         return []
 
-# הגדרת הבתים הרשמית לטאב 2
+@st.cache_data(ttl=120)
+def fetch_world_cup_standings():
+    try:
+        url = "https://api.football-data.org/v4/competitions/WC/standings"
+        resp = requests.get(url, headers=HEADERS)
+        return resp.json().get("standings", [])
+    except:
+        return []
+
+all_wc_matches = fetch_world_cup_matches()
+all_wc_standings = fetch_world_cup_standings()
+
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
 teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
 teams_c = ["ברזיל 🇧🇷", "מרוקו 🇲🇦", "האיטי 🇭🇹", "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿"]
@@ -83,6 +94,21 @@ teams_l = ["אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "קרואטיה 🇭🇷
 
 ALL_48_TEAMS = sorted(list(set(teams_a + teams_b + teams_c + teams_d + teams_e + teams_f + teams_g + teams_h + teams_i + teams_j + teams_k + teams_l)))
 
+target_date_str = now_il.strftime("%Y-%m-%d")
+daily_events = [m for m in all_wc_matches if m.get("utcDate", "").startswith(target_date_str)]
+
+if not daily_events:
+    daily_events = [
+        {
+            "id": "test_match_1", "homeTeam": {"name": "Argentina"}, "awayTeam": {"name": "Brazil"}, 
+            "utcDate": target_date_str + "T12:00:00Z", "status": "FINISHED", "score": {"fullTime": {"home": 2, "away": 1}}
+        },
+        {
+            "id": "test_match_2", "homeTeam": {"name": "Mexico"}, "awayTeam": {"name": "Czech Republic"}, 
+            "utcDate": target_date_str + "T23:59:00Z", "status": "TIMED", "score": {"fullTime": {"home": None, "away": None}}
+        }
+    ]
+
 tab1, tab2, tab3 = st.tabs(["⚽ ניחושים יומיים", "🏆 ניחוש האלופה", "📊 טבלת המובילים"])
 
 with tab1:
@@ -90,62 +116,51 @@ with tab1:
     st.write("")
     
     guess_inputs = {}
-    has_matches = False
+    has_open_matches = False
     
-    for i in range(3):
-        target_date = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
-        date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
+    st.markdown(f"### 📅 משחקי היום ({target_date_str.split('-')[2]}/{target_date_str.split('-')[1]}):")
+    
+    for match in daily_events:
+        match_id = match.get("id")
+        home_en = match.get("homeTeam", {}).get("name")
+        away_en = match.get("awayTeam", {}).get("name")
+        home_heb = get_team_name_heb(home_en)
+        away_heb = get_team_name_heb(away_en)
         
-        # קריאה לפונקציה השמורה ב-Cache במקום פנייה ישירה לשרת
-        events = fetch_matches_from_api(target_date)
+        utc_time_str = match.get("utcDate").replace("Z", "+00:00")
+        match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
+        is_locked = now_il >= match_time or match.get("status") == "FINISHED"
+        
+        if match.get("status") == "FINISHED":
+            score_home = match.get("score", {}).get("fullTime", {}).get("home")
+            score_away = match.get("score", {}).get("fullTime", {}).get("away")
+            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
+        elif is_locked:
+            lock_text = "🔒 נעול! המשחק החל"
+        else:
+            lock_text = f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
+            has_open_matches = True
             
-        # בלוק סימולציה זמני לבדיקות (יימחק כשהטורניר יתחיל)
-        if not events and i == 0:
-            now_utc_ts = int(datetime.now(ZoneInfo("UTC")).timestamp())
-            events = [
-                {"id": "test_match_1", "homeTeam": {"name": "Argentina"}, "awayTeam": {"name": "Brazil"}, "startTimestamp": now_utc_ts + 7200},
-                {"id": "test_match_2", "homeTeam": {"name": "France"}, "awayTeam": {"name": "England"}, "startTimestamp": now_utc_ts + 10800}
-            ]
-            
-        if events:
-            has_matches = True
-            st.markdown(f"### 📅 משחקי {date_label} ({target_date.split('-')[2]}/{target_date.split('-')[1]}):")
-            total_games_today = len(events)
-            
-            for event in events[:4]:
-                match_id = event.get("id")
-                home_en = event.get("homeTeam", {}).get("name")
-                away_en = event.get("awayTeam", {}).get("name")
-                
-                home_heb = get_team_name_heb(home_en)
-                away_heb = get_team_name_heb(away_en)
-                
-                match_timestamp = event.get("startTimestamp")
-                match_time = datetime.fromtimestamp(match_timestamp, tz=ZoneInfo("UTC")).astimezone(IL_TZ)
-                
-                is_locked = now_il >= match_time
-                lock_text = "🔒 נעול! המשחק החל" if is_locked else f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
-                
-                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
-                st.caption(lock_text)
-                
-                col1, col2, col3 = st.columns([3, 3, 2])
-                with col1:
-                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", disabled=is_locked)
-                with col2:
-                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", disabled=is_locked)
-                with col3:
-                    st.write("")
-                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
-                
-                if not is_locked:
-                    guess_inputs[match_id] = {
-                        "home_g": h_input, "away_g": a_input, "joker": j_check, 
-                        "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today, "date": target_date
-                    }
-                st.write("---")
+        st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
+        st.caption(lock_text)
+        
+        col1, col2, col3 = st.columns([3, 3, 2])
+        with col1:
+            h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", disabled=is_locked)
+        with col2:
+            a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", disabled=is_locked)
+        with col3:
+            st.write("")
+            j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
+        
+        if not is_locked:
+            guess_inputs[match_id] = {
+                "home_g": h_input, "away_g": a_input, "joker": j_check, 
+                "name": f"{home_en} vs {away_en}", "total_games_day": len(daily_events), "date": target_date_str
+            }
+        st.write("---")
 
-    if has_matches:
+    if has_open_matches:
         if st.button("💾 שמור את הניחושים היומיים שלי"):
             joker_count = sum(1 for d in guess_inputs.values() if d["joker"])
             joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in guess_inputs.values())
@@ -171,26 +186,21 @@ with tab1:
                                 username, str(m_id), str(data["name"]), int(data["home_g"]), int(data["away_g"]), joker_str
                             ]
                             
-                            # 🔄 מנגנון ה-Upsert: מחפש האם קיים כבר ניחוש של המשתמש למשחק הספציפי הזה
                             existing_row_idx = None
                             for idx, row in enumerate(all_rows):
                                 if idx == 0: continue
                                 if len(row) > 2 and row[1] == username and row[2] == str(m_id):
-                                    existing_row_idx = idx + 1  # המרה לאינדקס של גוגל (מתחיל מ-1)
+                                    existing_row_idx = idx + 1
                                     break
                             
                             if existing_row_idx:
-                                # עדכון השורה הקיימת (דריסה) במקום הוספת שורה חדשה
                                 guesses_sheet.update(f"A{existing_row_idx}:G{existing_row_idx}", [new_row])
                             else:
-                                # הוספת שורה חדשה אם המשתמש מנחש את המשחק הזה לראשונה
                                 guesses_sheet.append_row(new_row, table_range="A1")
                                 
                         st.success(f"🎉 כל הכבוד {username}! הניחושים שלך עודכנו בהצלחה בטבלה!")
                     except Exception as e:
-                        st.error(f"❌: {e}")
-                else:
-                    st.warning("⚠️ אין חיבור לטבלה.")
+                        st.error(f"❌ שגיאה בשמירה: {e}")
 
 with tab2:
     st.markdown("### 🏆 הניחוש המוקדם שלך לטורניר")
@@ -233,7 +243,6 @@ with tab2:
                     username, champ, group_a, group_b, group_c, group_d, group_e, group_f, group_g, group_h, group_i, group_j, group_k, group_l
                 ]
                 
-                # 🔄 Upsert גם לניחושי הטורניר: מונע כפילויות של המשתמש
                 existing_t_idx = None
                 for idx, row in enumerate(all_t_rows):
                     if idx == 0: continue
@@ -251,6 +260,117 @@ with tab2:
                 st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
 
 with tab3:
-    st.subheader("📊 טבלת האליפות המשפחתית")
-    mock_data = {"משתמש": FAMILY_MEMBERS, "נקודות משחקים": [0]*len(FAMILY_MEMBERS), "בונוס מוקדם": [0]*len(FAMILY_MEMBERS), "סך הכל": [0]*len(FAMILY_MEMBERS)}
-    st.table(mock_data)
+    st.markdown("### 📊 טבלת האליפות המשפחתית")
+    scores_table = {member: {"משחקים": 0, "בונוס טורניר": 0, "סך הכל": 0} for member in FAMILY_MEMBERS}
+    
+    if sheet:
+        try:
+            # 1. עיבוד תוצאות אמת של משחקים מה-API + זיהוי אוטומטי של האלופה הרשמית מהגמר!
+            actual_results = {}
+            actual_champion = None
+            
+            # סריקה לאיתור האלופה הרשמית ממשחק הגמר
+            for m in all_wc_matches:
+                if m.get("status") == "FINISHED":
+                    # איסוף תוצאות רגילות
+                    full_time = m.get("score", {}).get("fullTime", {})
+                    if full_time.get("home") is not None and full_time.get("away") is not None:
+                        actual_results[str(m.get("id"))] = {"home": int(full_time.get("home")), "away": int(full_time.get("away"))}
+                    
+                    # בדיקה האם זה משחק הגמר כדי לנעול אלופה
+                    if m.get("stage") == "FINAL":
+                        winner_code = m.get("score", {}).get("winner") # "HOME_TEAM" או "AWAY_TEAM"
+                        if winner_code == "HOME_TEAM":
+                            actual_champion = clean_string(get_team_name_heb(m.get("homeTeam", {}).get("name")))
+                        elif winner_code == "AWAY_TEAM":
+                            actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
+            
+            # 🧪 סימולציה זמנית לבדיקות: אם הטורניר לא התחיל, נזריק אלופה ומשחק דמה כדי שתראו שזה עובד!
+            if not actual_results:
+                actual_results["test_match_1"] = {"home": 2, "away": 1}
+                actual_champion = clean_string("ארגנטינה 🇦🇷") # קובע שארגנטינה היא האלופה לצורך הטסט
+
+            # 2. עיבוד טבלאות בתים רשמיות לזיהוי מקום 1
+            actual_group_winners = {}
+            current_standings = all_wc_standings if all_wc_standings else [
+                {"group": "GROUP_A", "table": [{"position": 1, "team": {"name": "Mexico"}}]},
+                {"group": "GROUP_B", "table": [{"position": 1, "team": {"name": "Canada"}}]}
+            ]
+                
+            for group_data in current_standings:
+                g_name = group_data.get("group")
+                g_table = group_data.get("table", [])
+                if g_table:
+                    top_team_en = g_table[0].get("team", {}).get("name")
+                    actual_group_winners[g_name] = clean_string(get_team_name_heb(top_team_en))
+
+            # 3. חישוב נקודות משחקים יומיים (חוק הפרש שערים רק בניצחונות!)
+            guesses_sheet = sheet.worksheet("DailyGuesses")
+            user_guesses = guesses_sheet.get_all_values()
+            if len(user_guesses) > 1:
+                for row in user_guesses[1:]:
+                    if len(row) < 7: continue
+                    g_user, g_match_id, g_home, g_away, g_joker = row[1], row[2], int(row[4]), int(row[5]), row[6] == "YES"
+                    
+                    if g_match_id in actual_results:
+                        real = actual_results[g_match_id]
+                        match_points = 0
+                        
+                        # 🏛️ מדרגות הניקוד המתוקנות:
+                        if g_home == real["home"] and g_away == real["away"]:
+                            match_points = 5 # בול בתוצאה (תופס גם לתיקו וגם לניצחון)
+                        elif g_home != g_away and (g_home - g_away) == (real["home"] - real["away"]):
+                            match_points = 3 # פגיעה בהפרש שערים - אך ורק אם זה לא תיקו!
+                        elif (g_home > g_away and real["home"] > real["away"]) or \
+                             (g_home < g_away and real["home"] < real["away"]) or \
+                             (g_home == g_away and real["home"] == real["away"]):
+                            match_points = 2 # פגיעה רק בכיוון הכללי של המשחק
+                            
+                        if g_joker: 
+                            match_points *= 2
+                            
+                        if g_user in scores_table: 
+                            scores_table[g_user]["משחקים"] += match_points
+
+            # 4. חישוב אוטומטי של בונוס ראשי בתים + בונוס אלופה (10 נקודות!)
+            tournament_sheet = sheet.worksheet("TournamentGuesses")
+            t_guesses = tournament_sheet.get_all_values()
+            
+            group_columns_mapping = [
+                ("GROUP_A", 3), ("GROUP_B", 4), ("GROUP_C", 5), ("GROUP_D", 6),
+                ("GROUP_E", 7), ("GROUP_F", 8), ("GROUP_G", 9), ("GROUP_H", 10),
+                ("GROUP_I", 11), ("GROUP_J", 12), ("GROUP_K", 13), ("GROUP_L", 14)
+            ]
+            
+            if len(t_guesses) > 1:
+                for row in t_guesses[1:]:
+                    if len(row) < 15: continue
+                    t_user = row[1]
+                    if t_user in scores_table:
+                        bonus_points = 0
+                        
+                        # א) בדיקת 12 הבתים
+                        for group_key, col_idx in group_columns_mapping:
+                            if group_key in actual_group_winners:
+                                user_pick_clean = clean_string(row[col_idx])
+                                if actual_group_winners[group_key] in user_pick_clean:
+                                    bonus_points += 3
+                                    
+                        # ב) בדיקת האלופה הסופית (עמודה אינדקס 2) - מעניקה 10 נקודות בונוס!
+                        if actual_champion:
+                            user_champ_clean = clean_string(row[2])
+                            if actual_champion in user_champ_clean:
+                                bonus_points += 10
+                                
+                        scores_table[t_user]["בונוס טורניר"] += bonus_points
+
+            # 5. סיכום סופי
+            for member in scores_table:
+                scores_table[member]["סך הכל"] = scores_table[member]["משחקים"] + scores_table[member]["בונוס טורניר"]
+                
+        except Exception as e:
+            st.warning(f"טעינת נקודות: {e}")
+            
+    formatted_data = [{"משתמש": m, "⚽ נקודות משחקים": d["משחקים"], "🏆 בונוס טורניר": d["בונוס טורניר"], "🔥 סך הכל": d["סך הכל"]} for m, d in scores_table.items()]
+    formatted_data = sorted(formatted_data, key=lambda x: x["🔥 סך הכל"], reverse=True)
+    st.table(formatted_data)
