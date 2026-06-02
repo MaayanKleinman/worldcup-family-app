@@ -23,16 +23,7 @@ def init_connection():
 
 sheet = init_connection()
 
-def safe_update(worksheet, range_name, values):
-    try:
-        worksheet.update(values=values, range_name=range_name)
-    except:
-        try:
-            worksheet.update(range_name, values)
-        except Exception as e:
-            st.error(f"❌ שגיאה בעדכון השורה בשיטס: {e}")
-
-# 👥 שמות המשתתפים הרשמיים של המשפחה!
+# 👥 שמות המשתתפים הרשמיים של המשפחה
 FAMILY_MEMBERS = ["נחש ינחש" , "מחליד", "המכשפה" , "צבצב", "יובל המנוול", "הזקן", "רתם המצחין", "עדיאל קורקוס"]
 
 st.markdown("""
@@ -48,68 +39,31 @@ st.markdown("<h1 style='text-align: center; color: #e61d25;'>🏆 מונדיאל
 username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", FAMILY_MEMBERS)
 st.write("---")
 
-# 🌍 מילון תרגום מתוקן והרמטי לכל 48 הנבחרות כולל וריאציות API רשמיות
 TEAM_TRANSLATION = {
     # בית א'
-    "Mexico": "מקסיקו 🇲🇽",
-    "South Africa": "דרום אפריקה 🇿🇦",
-    "South Korea": "קוריאה הדרומית 🇰🇷", "Korea Republic": "קוריאה הדרומית 🇰🇷", "Korea": "קוריאה הדרומית 🇰🇷",
-    "Czech Republic": "צ'כיה 🇨🇿", "Czechia": "צ'כיה 🇨🇿",
+    "Mexico": "מקסיקו 🇲🇽", "South Africa": "דרום אפריקה 🇿🇦", "South Korea": "קוריאה הדרומית 🇰🇷", "Korea Republic": "קוריאה הדרומית 🇰🇷", "Korea": "קוריאה הדרומית 🇰🇷", "Czech Republic": "צ'כיה 🇨🇿", "Czechia": "צ'כיה 🇨🇿",
     # בית ב'
-    "Canada": "קנדה 🇨🇦",
-    "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦", "Bosnia-Herzegovina": "בוסניה והרצגובינה 🇧🇦",
-    "Qatar": "קטאר 🇶🇦",
-    "Switzerland": "שווייץ 🇨🇭",
+    "Canada": "קנדה 🇨🇦", "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦", "Bosnia-Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Qatar": "קטאר 🇶🇦", "Switzerland": "שווייץ 🇨🇭",
     # בית ג'
-    "Brazil": "ברזיל 🇧🇷",
-    "Morocco": "מרוקו 🇲🇦",
-    "Haiti": "האיטי 🇭🇹",
-    "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+    "Brazil": "ברזיל 🇧🇷", "Morocco": "מרוקו 🇲🇦", "Haiti": "האיטי 🇭🇹", "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
     # בית ד'
-    "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸",
-    "Paraguay": "פרגוואי 🇵🇾",
-    "Australia": "אוסטרליה 🇦🇺",
-    "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
+    "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸", "Paraguay": "פרגוואי 🇵🇾", "Australia": "אוסטרליה 🇦🇺", "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
     # בית ה'
-    "Germany": "גרמניה 🇩🇪",
-    "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼",
-    "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮",
-    "Ecuador": "אקוודור 🇪🇨",
+    "Germany": "גרמניה 🇩🇪", "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼", "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮", "Ecuador": "אקוודור 🇪🇨",
     # בית ו'
-    "Netherlands": "הולנד 🇳🇱",
-    "Japan": "יפן 🇯🇵",
-    "Sweden": "שוודיה 🇸🇪",
-    "Tunisia": "טוניסיה 🇹🇳",
+    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇹🇳",
     # בית ז'
-    "Belgium": "בלגיה 🇧🇪",
-    "Egypt": "מצרים 🇪🇬",
-    "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷",
-    "New Zealand": "ניו זילנד 🇳🇿",
+    "Belgium": "בלגיה 🇧🇪", "Egypt": "מצרים 🇪🇬", "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷", "New Zealand": "ניו זילנד 🇳🇿",
     # בית ח'
-    "Spain": "ספרד 🇪🇸",
-    "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻",
-    "Saudi Arabia": "ערב הסעודית 🇸🇦",
-    "Uruguay": "אורוגוואי 🇺🇾",
+    "Spain": "ספרד 🇪🇸", "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻", "Saudi Arabia": "ערב הסעודית 🇸🇦", "Uruguay": "אורוגוואי 🇺🇾",
     # בית ט'
-    "France": "צרפת 🇫🇷",
-    "Senegal": "סנגל 🇸🇳",
-    "Iraq": "עיראק 🇮🇶",
-    "Norway": "נורווגיה 🇳🇴",
+    "France": "צרפת 🇫🇷", "Senegal": "סנגל 🇸🇳", "Iraq": "עיראק 🇮🇶", "Norway": "נורווגיה 🇳🇴",
     # בית י'
-    "Argentina": "ארגנטינה 🇦🇷",
-    "Algeria": "אלג'יריה 🇩🇿",
-    "Austria": "אוסטריה 🇦🇹",
-    "Jordan": "ירדן 🇯🇴",
+    "Argentina": "ארגנטינה 🇦🇷", "Algeria": "אלג'יריה 🇩🇿", "Austria": "אוסטריה 🇦🇹", "Jordan": "ירדן 🇯🇴",
     # בית י"א
-    "Portugal": "פורטוגל 🇵🇹",
-    "DR Congo": "קונגו הדמוקרטית 🇨🇩", "Congo DR": "קונגו הדמוקרטית 🇨🇩", "Democratic Republic of the Congo": "קונגו הדמוקרטית 🇨🇩",
-    "Uzbekistan": "אוזבקיסטן 🇺🇿",
-    "Colombia": "קולומביה 🇨🇴",
+    "Portugal": "פורטוגל 🇵🇹", "DR Congo": "קונגו הדמוקרטית 🇨🇩", "Congo DR": "קונגו הדמוקרטית 🇨🇩", "Democratic Republic of the Congo": "קונגו הדמוקרטית 🇨🇩", "Uzbekistan": "אוזבקיסטן 🇺🇿", "Colombia": "קולומביה 🇨🇴",
     # בית י"ב
-    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    "Croatia": "קרואטיה 🇭🇷",
-    "Ghana": "גאנה 🇬🇭",
-    "Panama": "פנמה 🇵🇦"
+    "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Croatia": "קרואטיה 🇭🇷", "Ghana": "גאנה 🇬🇭", "Panama": "פנמה 🇵🇦"
 }
 
 def get_team_name_heb(en_name):
@@ -170,9 +124,23 @@ with tab1:
     st.markdown("<div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; border-right: 5px solid #e61d25; color: #b30000; font-weight: bold;'>⚠️ שימו לב: הניחוש תקף ל-90 דקות משחק בלבד! (כולל תוספת זמן פציעות, לא כולל הארכות ופנדלים)</div>", unsafe_allow_html=True)
     st.write("")
     
-    guess_inputs = {}
-    has_open_matches = False
+    # 📥 שלב 1: שליפת כל ניחושי העבר של המשתמש מהשיטס כדי למנוע איפוס ל-0-0
+    user_daily_guesses = {}
+    if sheet:
+        try:
+            guesses_sheet = sheet.worksheet("DailyGuesses")
+            all_guesses = guesses_sheet.get_all_values()
+            for row in all_guesses:
+                if len(row) > 6 and row[1].strip() == username.strip():
+                    user_daily_guesses[row[2].strip()] = {
+                        "home": row[4], "away": row[5], "joker": row[6]
+                    }
+        except Exception as e:
+            st.warning(f"שגיאה זמנית בטעינת ניחושי עבר: {e}")
+
+    has_any_open_matches = False
     
+    # 🔄 שלב 2: ריצה על הימים (היום, מחר, מחרתיים)
     for i in range(3):
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
@@ -190,8 +158,11 @@ with tab1:
             st.markdown(f"### 📅 משחקי {date_label} ({current_loop_date_str.split('-')[2]}/{current_loop_date_str.split('-')[1]}):")
             total_games_today = len(daily_events)
             
+            day_inputs = {}
+            day_has_open = False
+            
             for match in daily_events:
-                match_id = match.get("id")
+                match_id = str(match.get("id"))
                 home_en = match.get("homeTeam", {}).get("name")
                 away_en = match.get("awayTeam", {}).get("name")
                 home_heb = get_team_name_heb(home_en)
@@ -201,75 +172,85 @@ with tab1:
                 match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
                 is_locked = now_il >= match_time or match.get("status") == "FINISHED"
                 
+                # טעינת ערכי ברירת המחדל ממה שהמשתמש שמר בעבר
+                existing = user_daily_guesses.get(match_id, {})
+                default_home = int(existing.get("home")) if existing.get("home") is not None else 0
+                default_away = int(existing.get("away")) if existing.get("away") is not None else 0
+                default_joker = existing.get("joker", "NO") == "YES"
+                
                 if match.get("status") == "FINISHED":
                     score_home = match.get("score", {}).get("fullTime", {}).get("home")
                     score_away = match.get("score", {}).get("fullTime", {}).get("away")
                     lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
                 elif is_locked:
-                    lock_text = "🔒 נעול! המשחק החל"
+                    lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                 else:
                     lock_text = f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
-                    has_open_matches = True
+                    day_has_open = True
+                    has_any_open_matches = True
                     
                 st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
                 st.caption(lock_text)
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
                 with col1:
-                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", disabled=is_locked)
+                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", value=default_home, disabled=is_locked)
                 with col2:
-                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", disabled=is_locked)
+                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", value=default_away, disabled=is_locked)
                 with col3:
                     st.write("")
-                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", disabled=is_locked)
+                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", value=default_joker, disabled=is_locked)
                 
-                if not is_locked:
-                    guess_inputs[match_id] = {
-                        "home_g": h_input, "away_g": a_input, "joker": j_check, 
-                        "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today, "date": current_loop_date_str
-                    }
+                day_inputs[match_id] = {
+                    "home_g": h_input, "away_g": a_input, "joker": j_check, "is_locked": is_locked,
+                    "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today
+                }
                 st.write("---")
 
-    if has_open_matches:
-        if st.button("💾 שמור את הניחושים היומיים שלי"):
-            joker_count = sum(1 for d in guess_inputs.values() if d["joker"])
-            joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in guess_inputs.values())
-            
-            if joker_count > 1:
-                st.error("⚠️ עצור! מותר לבחור רק ג'וקר אחד לכל יום משחקים.")
-            elif joker_in_short_day:
-                st.error("⚠️ לא ניתן להשתמש בג'וקר ביום זה! חוק הג'וקר תקף רק לימים בהם משוחקים 3 משחקים ומעלה.")
+            # 💾 לחצן שמירה ייעודי וספציפי לכל יום בנפרד!
+            if day_has_open:
+                if st.button(f"💾 שמור את ניחושי {date_label}", key=f"save_{current_loop_date_str}"):
+                    joker_count = sum(1 for d in day_inputs.values() if d["joker"])
+                    joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in day_inputs.values())
+                    
+                    if joker_count > 1:
+                        st.error(f"⚠️ עצור! מותר לבחור רק ג'וקר אחד עבור משחקי {date_label}.")
+                    elif joker_in_short_day:
+                        st.error("⚠️ לא ניתן להשתמש בג'וקר ביום זה! חוק הג'וקר תקף רק לימים בהם משוחקים 3 משחקים ומעלה.")
+                    else:
+                        if sheet:
+                            try:
+                                guesses_sheet = sheet.worksheet("DailyGuesses")
+                                all_rows = guesses_sheet.get_all_values()
+                                    
+                                for m_id, data in day_inputs.items():
+                                    if data["is_locked"]: continue # מדלג ולא דורס משחקים שכבר התחילו/נעולים
+                                    
+                                    joker_str = "YES" if data["joker"] else "NO"
+                                    new_row = [
+                                        datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                                        username, str(m_id), str(data["name"]), int(data["home_g"]), int(data["away_g"]), joker_str
+                                    ]
+                                    
+                                    existing_row_idx = None
+                                    for idx, row in enumerate(all_rows):
+                                        if len(row) > 2 and row[1].strip() == username.strip() and row[2].strip() == str(m_id).strip():
+                                            existing_row_idx = idx + 1
+                                            break
+                                    
+                                    if existing_row_idx:
+                                        guesses_sheet.update(f"A{existing_row_idx}:G{existing_row_idx}", [new_row])
+                                    else:
+                                        guesses_sheet.append_row(new_row, table_range="A1")
+                                        
+                                st.success(f"🎉 כל הכבוד {username}! הניחושים שלך ליום {date_label} נשמרו בהצלחה!")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ שגיאה בשמירה: {e}")
             else:
-                if sheet:
-                    try:
-                        guesses_sheet = sheet.worksheet("DailyGuesses")
-                        all_rows = guesses_sheet.get_all_values()
-                        
-                        u_idx = 1 
-                        m_idx = 2 
-                            
-                        for m_id, data in guess_inputs.items():
-                            joker_str = "YES" if data["joker"] else "NO"
-                            new_row = [
-                                datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-                                username, str(m_id), str(data["name"]), int(data["home_g"]), int(data["away_g"]), joker_str
-                            ]
-                            
-                            existing_row_idx = None
-                            for idx, row in enumerate(all_rows):
-                                if len(row) > 2 and row[1].strip() == username.strip() and row[2].strip() == str(m_id).strip():
-                                    existing_row_idx = idx + 1
-                                    break
-                            
-                            if existing_row_idx:
-                                guesses_sheet.update(f"A{existing_row_idx}:G{existing_row_idx}", [new_row])
-                            else:
-                                guesses_sheet.append_row(new_row, table_range="A1")
-                                
-                        st.success(f"🎉 כל הכבוד {username}! הניחושים שלך עודכנו בהצלחה בטבלה!")
-                    except Exception as e:
-                        st.error(f"❌ שגיאה בשמירה: {e}")
-    else:
+                st.info(f"🔒 כל המשחקים של יום {date_label} כבר נעולים או הסתיימו.")
+
+    if not has_any_open_matches:
         st.info("אין משחקים פתוחים לניחוש כרגע בטווח הימים הקרוב.")
 
 with tab2:
