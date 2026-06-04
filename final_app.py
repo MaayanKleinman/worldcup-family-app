@@ -73,6 +73,12 @@ def clean_string(text):
     if not text: return ""
     return "".join([c for c in text if c.isalnum()]).lower()
 
+def safe_int(value, default=0):
+    try:
+        return int(str(value).strip())
+    except (ValueError, TypeError):
+        return default
+
 TOKEN = st.secrets["football_data_token"]
 HEADERS = {"X-Auth-Token": TOKEN}
 
@@ -87,21 +93,27 @@ def fetch_world_cup_matches():
     try:
         url = "https://api.football-data.org/v4/competitions/WC/matches"
         resp = requests.get(url, headers=HEADERS)
+        resp.raise_for_status()
         return resp.json().get("matches", [])
-    except:
-        return []
+    except Exception:
+        return None
 
 @st.cache_data(ttl=120)
 def fetch_world_cup_standings():
     try:
         url = "https://api.football-data.org/v4/competitions/WC/standings"
         resp = requests.get(url, headers=HEADERS)
+        resp.raise_for_status()
         return resp.json().get("standings", [])
-    except:
-        return []
+    except Exception:
+        return None
 
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
+
+if all_wc_matches is None or all_wc_standings is None:
+    st.error("❌ תקלה בתקשורת עם שרתי הנתונים של פיפ\"א! אנא רעננו את העמוד או נסו שוב מאוחר יותר.")
+    st.stop()
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
 teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
@@ -124,7 +136,6 @@ with tab1:
     st.markdown("<div style='background-color: #ffe6e6; padding: 10px; border-radius: 5px; border-right: 5px solid #e61d25; color: #b30000; font-weight: bold;'>⚠️ שימו לב: הניחוש תקף ל-90 דקות משחק בלבד! (כולל תוספת זמן פציעות, לא כולל הארכות ופנדלים)</div>", unsafe_allow_html=True)
     st.write("")
     
-    # 📥 שלב 1: שליפת כל ניחושי העבר של המשתמש מהשיטס כדי למנוע איפוס ל-0-0
     user_daily_guesses = {}
     if sheet:
         try:
@@ -140,7 +151,6 @@ with tab1:
 
     has_any_open_matches = False
     
-    # 🔄 שלב 2: ריצה על הימים (היום, מחר, מחרתיים)
     for i in range(3):
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
@@ -172,10 +182,9 @@ with tab1:
                 match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
                 is_locked = now_il >= match_time or match.get("status") == "FINISHED"
                 
-                # טעינת ערכי ברירת המחדל ממה שהמשתמש שמר בעבר, עם הגנה מתאים ריקים בשיטס
                 existing = user_daily_guesses.get(match_id, {})
-                default_home = int(existing.get("home")) if existing.get("home") not in [None, ""] else 0
-                default_away = int(existing.get("away")) if existing.get("away") not in [None, ""] else 0
+                default_home = safe_int(existing.get("home"))
+                default_away = safe_int(existing.get("away"))
                 default_joker = existing.get("joker", "NO") == "YES"
                 
                 if match.get("status") == "FINISHED":
@@ -207,7 +216,6 @@ with tab1:
                 }
                 st.write("---")
 
-            # 💾 לחצן שמירה ייעודי וספציפי לכל יום בנפרד!
             if day_has_open:
                 if st.button(f"💾 שמור את ניחושי {date_label}", key=f"save_{current_loop_date_str}"):
                     joker_count = sum(1 for d in day_inputs.values() if d["joker"])
@@ -224,7 +232,7 @@ with tab1:
                                 all_rows = guesses_sheet.get_all_values()
                                     
                                 for m_id, data in day_inputs.items():
-                                    if data["is_locked"]: continue # מדלג ולא דורס משחקים שכבר התחילו/נעולים
+                                    if data["is_locked"]: continue
                                     
                                     joker_str = "YES" if data["joker"] else "NO"
                                     new_row = [
@@ -261,7 +269,6 @@ with tab2:
     else:
         st.info("⏰ חלק זה יינעל אוטומטית ב-11 ליוני 2026 בשעה 22:00 עם שריקת הפתיחה של המונדיאל!")
     
-    # שליפת ניחושי העבר לטורניר מהשיטס
     saved_t_guesses = []
     if sheet:
         try:
@@ -274,7 +281,6 @@ with tab2:
         except Exception:
             pass
 
-    # פונקציית עזר למציאת האינדקס השמור או החזרת 0
     def get_idx(lst, val):
         return lst.index(val) if val in lst else 0
 
