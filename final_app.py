@@ -263,23 +263,23 @@ with tab2:
     
     champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, disabled=is_tournament_started)
     st.write("---")
-    st.markdown("#### ⚽ מי יסיימו בראשות הבתים? (3 נק' לכל תשובה נכונה)")
+    st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
     
     col1, col2 = st.columns(2)
     with col1:
-        group_a = st.selectbox("ראשות בית א'", teams_a, disabled=is_tournament_started)
-        group_b = st.selectbox("ראשות בית ב'", teams_b, disabled=is_tournament_started)
-        group_c = st.selectbox("ראשות בית ג'", teams_c, disabled=is_tournament_started)
-        group_d = st.selectbox("ראשות בית ד'", teams_d, disabled=is_tournament_started)
-        group_e = st.selectbox("ראשות בית ה'", teams_e, disabled=is_tournament_started)
-        group_f = st.selectbox("ראשות בית ו'", teams_f, disabled=is_tournament_started)
+        group_a = st.selectbox("מקום שני בית א'", teams_a, disabled=is_tournament_started)
+        group_b = st.selectbox("מקום שני בית ב'", teams_b, disabled=is_tournament_started)
+        group_c = st.selectbox("מקום שני בית ג'", teams_c, disabled=is_tournament_started)
+        group_d = st.selectbox("מקום שני בית ד'", teams_d, disabled=is_tournament_started)
+        group_e = st.selectbox("מקום שני בית ה'", teams_e, disabled=is_tournament_started)
+        group_f = st.selectbox("מקום שני בית ו'", teams_f, disabled=is_tournament_started)
     with col2:
-        group_g = st.selectbox("ראשות בית ז'", teams_g, disabled=is_tournament_started)
-        group_h = st.selectbox("ראשות בית ח'", teams_h, disabled=is_tournament_started)
-        group_i = st.selectbox("ראשות בית ט'", teams_i, disabled=is_tournament_started)
-        group_j = st.selectbox("ראשות בית י'", teams_j, disabled=is_tournament_started)
-        group_k = st.selectbox("ראשות בית י\"א", teams_k, disabled=is_tournament_started)
-        group_l = st.selectbox("ראשות בית י\"ב", teams_l, disabled=is_tournament_started)
+        group_g = st.selectbox("מקום שני בית ז'", teams_g, disabled=is_tournament_started)
+        group_h = st.selectbox("מקום שני בית ח'", teams_h, disabled=is_tournament_started)
+        group_i = st.selectbox("מקום שני בית ט'", teams_i, disabled=is_tournament_started)
+        group_j = st.selectbox("מקום שני בית י'", teams_j, disabled=is_tournament_started)
+        group_k = st.selectbox("מקום שני בית י\"א", teams_k, disabled=is_tournament_started)
+        group_l = st.selectbox("מקום שני בית י\"ב", teams_l, disabled=is_tournament_started)
 
     st.write("---")
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח", disabled=is_tournament_started):
@@ -335,13 +335,13 @@ with tab3:
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
-            actual_group_winners = {}
+            actual_group_runners_up = {}
             for group_data in all_wc_standings:
                 g_name = group_data.get("group")
                 g_table = group_data.get("table", [])
-                if g_table:
-                    top_team_en = g_table[0].get("team", {}).get("name")
-                    actual_group_winners[g_name] = clean_string(get_team_name_heb(top_team_en))
+                if len(g_table) > 1: # מוודא שיש קבוצה במקום השני
+                    second_team_en = g_table[1].get("team", {}).get("name")
+                    actual_group_runners_up[g_name] = clean_string(get_team_name_heb(second_team_en))
 
             guesses_sheet = sheet.worksheet("DailyGuesses")
             user_guesses = guesses_sheet.get_all_values()
@@ -362,13 +362,11 @@ with tab3:
                         match_points = 0
                         
                         if g_home == real["home"] and g_away == real["away"]:
-                            match_points = 5 
-                        elif g_home != g_away and (g_home - g_away) == (real["home"] - real["away"]):
-                            match_points = 3 
+                            match_points = 3 # בול בתוצאה
                         elif (g_home > g_away and real["home"] > real["away"]) or \
                              (g_home < g_away and real["home"] < real["away"]) or \
                              (g_home == g_away and real["home"] == real["away"]):
-                            match_points = 2 
+                            match_points = 1 # כיוון נכון בלבד
                             
                         if g_joker: 
                             match_points *= 2
@@ -393,15 +391,15 @@ with tab3:
                         bonus_points = 0
                         
                         for group_key, col_idx in group_columns_mapping:
-                            if group_key in actual_group_winners and len(row) > col_idx:
+                            if group_key in actual_group_runners_up and len(row) > col_idx:
                                 user_pick_clean = clean_string(row[col_idx])
-                                if actual_group_winners[group_key] in user_pick_clean:
-                                    bonus_points += 3
+                                if actual_group_runners_up[group_key] in user_pick_clean:
+                                    bonus_points += 2 # ניקוד מעודכן על פגיעה במקום שני
                                     
                         if actual_champion and len(row) > 2:
                             user_champ_clean = clean_string(row[2])
                             if actual_champion in user_champ_clean:
-                                bonus_points += 10
+                                bonus_points += 8 # ניקוד מעודכן לאלופה
                                 
                         scores_table[t_user]["בונוס טורניר"] += bonus_points
 
