@@ -172,10 +172,10 @@ with tab1:
                 match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
                 is_locked = now_il >= match_time or match.get("status") == "FINISHED"
                 
-                # טעינת ערכי ברירת המחדל ממה שהמשתמש שמר בעבר
+                # טעינת ערכי ברירת המחדל ממה שהמשתמש שמר בעבר, עם הגנה מתאים ריקים בשיטס
                 existing = user_daily_guesses.get(match_id, {})
-                default_home = int(existing.get("home")) if existing.get("home") is not None else 0
-                default_away = int(existing.get("away")) if existing.get("away") is not None else 0
+                default_home = int(existing.get("home")) if existing.get("home") not in [None, ""] else 0
+                default_away = int(existing.get("away")) if existing.get("away") not in [None, ""] else 0
                 default_joker = existing.get("joker", "NO") == "YES"
                 
                 if match.get("status") == "FINISHED":
@@ -261,25 +261,56 @@ with tab2:
     else:
         st.info("⏰ חלק זה יינעל אוטומטית ב-11 ליוני 2026 בשעה 22:00 עם שריקת הפתיחה של המונדיאל!")
     
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, disabled=is_tournament_started)
+    # שליפת ניחושי העבר לטורניר מהשיטס
+    saved_t_guesses = []
+    if sheet:
+        try:
+            tournament_sheet = sheet.worksheet("TournamentGuesses")
+            all_t_rows = tournament_sheet.get_all_values()
+            for row in all_t_rows:
+                if len(row) > 1 and row[1].strip() == username.strip():
+                    saved_t_guesses = row
+                    break
+        except Exception:
+            pass
+
+    # פונקציית עזר למציאת האינדקס השמור או החזרת 0
+    def get_idx(lst, val):
+        return lst.index(val) if val in lst else 0
+
+    def_champ = get_idx(ALL_48_TEAMS, saved_t_guesses[2]) if len(saved_t_guesses) > 2 else 0
+    def_a = get_idx(teams_a, saved_t_guesses[3]) if len(saved_t_guesses) > 3 else 0
+    def_b = get_idx(teams_b, saved_t_guesses[4]) if len(saved_t_guesses) > 4 else 0
+    def_c = get_idx(teams_c, saved_t_guesses[5]) if len(saved_t_guesses) > 5 else 0
+    def_d = get_idx(teams_d, saved_t_guesses[6]) if len(saved_t_guesses) > 6 else 0
+    def_e = get_idx(teams_e, saved_t_guesses[7]) if len(saved_t_guesses) > 7 else 0
+    def_f = get_idx(teams_f, saved_t_guesses[8]) if len(saved_t_guesses) > 8 else 0
+    def_g = get_idx(teams_g, saved_t_guesses[9]) if len(saved_t_guesses) > 9 else 0
+    def_h = get_idx(teams_h, saved_t_guesses[10]) if len(saved_t_guesses) > 10 else 0
+    def_i = get_idx(teams_i, saved_t_guesses[11]) if len(saved_t_guesses) > 11 else 0
+    def_j = get_idx(teams_j, saved_t_guesses[12]) if len(saved_t_guesses) > 12 else 0
+    def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
+    def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
+
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, disabled=is_tournament_started)
     st.write("---")
     st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
     
     col1, col2 = st.columns(2)
     with col1:
-        group_a = st.selectbox("מקום שני בית א'", teams_a, disabled=is_tournament_started)
-        group_b = st.selectbox("מקום שני בית ב'", teams_b, disabled=is_tournament_started)
-        group_c = st.selectbox("מקום שני בית ג'", teams_c, disabled=is_tournament_started)
-        group_d = st.selectbox("מקום שני בית ד'", teams_d, disabled=is_tournament_started)
-        group_e = st.selectbox("מקום שני בית ה'", teams_e, disabled=is_tournament_started)
-        group_f = st.selectbox("מקום שני בית ו'", teams_f, disabled=is_tournament_started)
+        group_a = st.selectbox("מקום שני בית א'", teams_a, index=def_a, disabled=is_tournament_started)
+        group_b = st.selectbox("מקום שני בית ב'", teams_b, index=def_b, disabled=is_tournament_started)
+        group_c = st.selectbox("מקום שני בית ג'", teams_c, index=def_c, disabled=is_tournament_started)
+        group_d = st.selectbox("מקום שני בית ד'", teams_d, index=def_d, disabled=is_tournament_started)
+        group_e = st.selectbox("מקום שני בית ה'", teams_e, index=def_e, disabled=is_tournament_started)
+        group_f = st.selectbox("מקום שני בית ו'", teams_f, index=def_f, disabled=is_tournament_started)
     with col2:
-        group_g = st.selectbox("מקום שני בית ז'", teams_g, disabled=is_tournament_started)
-        group_h = st.selectbox("מקום שני בית ח'", teams_h, disabled=is_tournament_started)
-        group_i = st.selectbox("מקום שני בית ט'", teams_i, disabled=is_tournament_started)
-        group_j = st.selectbox("מקום שני בית י'", teams_j, disabled=is_tournament_started)
-        group_k = st.selectbox("מקום שני בית י\"א", teams_k, disabled=is_tournament_started)
-        group_l = st.selectbox("מקום שני בית י\"ב", teams_l, disabled=is_tournament_started)
+        group_g = st.selectbox("מקום שני בית ז'", teams_g, index=def_g, disabled=is_tournament_started)
+        group_h = st.selectbox("מקום שני בית ח'", teams_h, index=def_h, disabled=is_tournament_started)
+        group_i = st.selectbox("מקום שני בית ט'", teams_i, index=def_i, disabled=is_tournament_started)
+        group_j = st.selectbox("מקום שני בית י'", teams_j, index=def_j, disabled=is_tournament_started)
+        group_k = st.selectbox("מקום שני בית י\"א", teams_k, index=def_k, disabled=is_tournament_started)
+        group_l = st.selectbox("מקום שני בית י\"ב", teams_l, index=def_l, disabled=is_tournament_started)
 
     st.write("---")
     if st.button("💾 שמור ניחושי טורניר ארוכי טווח", disabled=is_tournament_started):
