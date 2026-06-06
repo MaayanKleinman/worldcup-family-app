@@ -23,6 +23,17 @@ def init_connection():
 
 sheet = init_connection()
 
+# 🚀 פונקציית ה-Caching החדשה שמונעת את השגיאה של גוגל (Error 429)
+@st.cache_data(ttl=60)
+def get_cached_sheet_data(worksheet_name):
+    if sheet:
+        try:
+            ws = sheet.worksheet(worksheet_name)
+            return ws.get_all_values()
+        except Exception:
+            return []
+    return []
+
 # 👥 שמות המשתתפים הרשמיים של המשפחה
 FAMILY_MEMBERS = ["נחש ינחש" , "מחליד", "המכשפה" , "צבצב", "יובל המנוול", "הזקן", "רתם המצחין", "עדיאל קורקוס"]
 
@@ -137,17 +148,13 @@ with tab1:
     st.write("")
     
     user_daily_guesses = {}
-    if sheet:
-        try:
-            guesses_sheet = sheet.worksheet("DailyGuesses")
-            all_guesses = guesses_sheet.get_all_values()
-            for row in all_guesses:
-                if len(row) > 6 and row[1].strip() == username.strip():
-                    user_daily_guesses[row[2].strip()] = {
-                        "home": row[4], "away": row[5], "joker": row[6]
-                    }
-        except Exception as e:
-            st.warning(f"שגיאה זמנית בטעינת ניחושי עבר: {e}")
+    all_guesses = get_cached_sheet_data("DailyGuesses")
+    if all_guesses:
+        for row in all_guesses:
+            if len(row) > 6 and row[1].strip() == username.strip():
+                user_daily_guesses[row[2].strip()] = {
+                    "home": row[4], "away": row[5], "joker": row[6]
+                }
 
     has_any_open_matches = False
     
@@ -229,7 +236,7 @@ with tab1:
                         if sheet:
                             try:
                                 guesses_sheet = sheet.worksheet("DailyGuesses")
-                                all_rows = guesses_sheet.get_all_values()
+                                all_rows = get_cached_sheet_data("DailyGuesses")
                                     
                                 for m_id, data in day_inputs.items():
                                     if data["is_locked"]: continue
@@ -250,7 +257,8 @@ with tab1:
                                         guesses_sheet.update(f"A{existing_row_idx}:G{existing_row_idx}", [new_row])
                                     else:
                                         guesses_sheet.append_row(new_row, table_range="A1")
-                                        
+                                
+                                get_cached_sheet_data.clear() # מנקה זיכרון אחרי כתיבה
                                 st.success(f"🎉 כל הכבוד {username}! הניחושים שלך ליום {date_label} נשמרו בהצלחה!")
                                 st.rerun()
                             except Exception as e:
@@ -270,16 +278,12 @@ with tab2:
         st.info("⏰ חלק זה יינעל אוטומטית ב-11 ליוני 2026 בשעה 22:00 עם שריקת הפתיחה של המונדיאל!")
     
     saved_t_guesses = []
-    if sheet:
-        try:
-            tournament_sheet = sheet.worksheet("TournamentGuesses")
-            all_t_rows = tournament_sheet.get_all_values()
-            for row in all_t_rows:
-                if len(row) > 1 and row[1].strip() == username.strip():
-                    saved_t_guesses = row
-                    break
-        except Exception:
-            pass
+    all_t_rows = get_cached_sheet_data("TournamentGuesses")
+    if all_t_rows:
+        for row in all_t_rows:
+            if len(row) > 1 and row[1].strip() == username.strip():
+                saved_t_guesses = row
+                break
 
     def get_idx(lst, val):
         return lst.index(val) if val in lst else 0
@@ -323,12 +327,12 @@ with tab2:
         if sheet:
             try:
                 tournament_sheet = sheet.worksheet("TournamentGuesses")
-                all_t_rows = tournament_sheet.get_all_values()
+                current_all_t_rows = get_cached_sheet_data("TournamentGuesses")
                 
-                if len(all_t_rows) == 0:
+                if len(current_all_t_rows) == 0:
                     headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
                     tournament_sheet.append_row(headers, table_range="A1")
-                    all_t_rows = tournament_sheet.get_all_values()
+                    current_all_t_rows = [headers] # מעדכן את המערך הלוקאלי כדי לא לדרוס את הכותרות
                 
                 t_row = [
                     datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
@@ -336,7 +340,7 @@ with tab2:
                 ]
                 
                 existing_t_idx = None
-                for idx, row in enumerate(all_t_rows):
+                for idx, row in enumerate(current_all_t_rows):
                     if len(row) > 1 and row[1].strip() == username.strip():
                         existing_t_idx = idx + 1
                         break
@@ -345,7 +349,8 @@ with tab2:
                     tournament_sheet.update(f"A{existing_t_idx}:O{existing_t_idx}", [t_row])
                 else:
                     tournament_sheet.append_row(t_row, table_range="A1")
-                    
+                
+                get_cached_sheet_data.clear() # מנקה זיכרון אחרי כתיבה
                 st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך עודכנו בטבלה!")
             except Exception as e:
                 st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
@@ -380,8 +385,7 @@ with tab3:
                     second_team_en = g_table[1].get("team", {}).get("name")
                     actual_group_runners_up[g_name] = clean_string(get_team_name_heb(second_team_en))
 
-            guesses_sheet = sheet.worksheet("DailyGuesses")
-            user_guesses = guesses_sheet.get_all_values()
+            user_guesses = get_cached_sheet_data("DailyGuesses")
             if len(user_guesses) > 0:
                 for row in user_guesses:
                     if len(row) < 7: continue
@@ -411,8 +415,7 @@ with tab3:
                         if g_user in scores_table: 
                             scores_table[g_user]["משחקים"] += match_points
 
-            tournament_sheet = sheet.worksheet("TournamentGuesses")
-            t_guesses = tournament_sheet.get_all_values()
+            t_guesses = get_cached_sheet_data("TournamentGuesses")
             
             group_columns_mapping = [
                 ("GROUP_A", 3), ("GROUP_B", 4), ("GROUP_C", 5), ("GROUP_D", 6),
