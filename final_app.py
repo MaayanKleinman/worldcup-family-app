@@ -122,9 +122,13 @@ def fetch_world_cup_standings():
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
 
-if all_wc_matches is None or all_wc_standings is None:
-    st.error("❌ תקלה בתקשורת עם שרתי הנתונים של פיפ\"א! אנא רעננו את העמוד או נסו שוב מאוחר יותר.")
+if all_wc_matches is None:
+    st.error("❌ תקלה קריטית בשליפת המשחקים משרתי פיפ\"א! לא ניתן להמשיך. אנא רעננו את העמוד או נסו מאוחר יותר.")
     st.stop()
+
+if all_wc_standings is None:
+    st.warning("⚠️ תקלה זמנית מול פיפ\"א בטעינת טבלאות הבתים. ניתן להמשיך למלא ניחושים יומיים כרגיל! (ייתכן שבונוס הבתים בטבלה לא מעודכן כרגע).")
+    all_wc_standings = [] # מאפס את זה לרשימה ריקה כדי שהלולאה בטאב 3 לא תקרוס
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
 teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
