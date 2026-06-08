@@ -410,7 +410,7 @@ with tab3:
                         
                         if g_home == real["home"] and g_away == real["away"]:
                             match_points = 3
-                        elif (g_home > g_away hover real["home"] > real["away"]) or \
+                        elif (g_home > g_away and real["home"] > real["away"]) or \
                              (g_home < g_away and real["home"] < real["away"]) or \
                              (g_home == g_away and real["home"] == real["away"]):
                             match_points = 1 
