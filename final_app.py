@@ -149,7 +149,7 @@ with tab1:
 
     has_any_open_matches = False
     
-   for i in range(7): # שינינו ל-7 ימים
+    for i in range(7): # שינינו ל-7 ימים
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         if i == 0:
             date_label = "היום"
