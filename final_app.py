@@ -113,7 +113,7 @@ def fetch_world_cup_standings():
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
 
-if all_wc_matches is None:
+if not all_wc_matches: # התנאי הזה תופס גם None וגם רשימה ריקה []
     st.error("❌ תקלה קריטית בשליפת המשחקים משרתי פיפ\"א! לא ניתן להמשיך. אנא רעננו את העמוד או נסו מאוחר יותר.")
     st.stop()
 
