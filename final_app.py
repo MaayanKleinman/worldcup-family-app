@@ -149,7 +149,7 @@ with tab1:
 
     has_any_open_matches = False
     
-    for i in range(7): # שינינו ל-7 ימים
+    for i in range(7): # מוגדר כרגע ל-7 ימים קדימה עבור הטסטים שלך
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         if i == 0:
             date_label = "היום"
@@ -208,7 +208,6 @@ with tab1:
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
                 with col1:
-                    # הוספנו את ה-username לתוך ה-key כדי להכריח את הזיכרון להתאפס בהחלפת משתמש
                     h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
                 with col2:
                     a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
@@ -301,7 +300,6 @@ with tab2:
     def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
     def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
 
-    # הוספת מזהה אישי ל-key גם בטאב 2 למניעת שגיאות דומות
     champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, disabled=is_tournament_started, key=f"champ_{username}")
     st.write("---")
     st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
