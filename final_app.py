@@ -149,9 +149,16 @@ with tab1:
 
     has_any_open_matches = False
     
-    for i in range(5):
+   for i in range(7): # שינינו ל-7 ימים
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
-        date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
+        if i == 0:
+            date_label = "היום"
+        elif i == 1:
+            date_label = "מחר"
+        elif i == 2:
+            date_label = "מחרתיים"
+        else:
+            date_label = f"בעוד {i} ימים"
         
         daily_events = []
         for m in all_wc_matches:
