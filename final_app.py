@@ -113,7 +113,7 @@ def fetch_world_cup_standings():
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
 
-if not all_wc_matches: # התנאי הזה תופס גם None וגם רשימה ריקה []
+if not all_wc_matches: 
     st.error("❌ תקלה קריטית בשליפת המשחקים משרתי פיפ\"א! לא ניתן להמשיך. אנא רעננו את העמוד או נסו מאוחר יותר.")
     st.stop()
 
@@ -153,16 +153,14 @@ with tab1:
 
     has_any_open_matches = False
     
-    for i in range(7): # פתוח ל-7 ימים לטובת הטסטים
+    for i in range(3): 
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         if i == 0:
             date_label = "היום"
         elif i == 1:
             date_label = "מחר"
-        elif i == 2:
-            date_label = "מחרתיים"
         else:
-            date_label = f"בעוד {i} ימים"
+            date_label = "מחרתיים"
         
         daily_events = []
         for m in all_wc_matches:
@@ -191,7 +189,6 @@ with tab1:
                 match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
                 is_locked = now_il >= match_time or match.get("status") == "FINISHED"
                 
-                # כאן אנחנו בודקים האם המשחק נשמר כבר
                 existing_data = user_daily_guesses.get(match_id)
                 is_saved = existing_data is not None
                 
@@ -216,7 +213,6 @@ with tab1:
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
                 with col1:
-                    # שינוי הכותרת ל"נשמר" אם קיים ניחוש
                     h_label = f"✅ שערים ל-{home_heb}" if is_saved else f"שערים ל-{home_heb}"
                     h_input = st.number_input(h_label, min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
                 with col2:
@@ -375,18 +371,6 @@ with tab3:
             actual_champion = None
             actual_group_runners_up = {}
             
-            # 💉 --- תחילת בלוק הזרקת נתוני דמה לבדיקות (למחוק בסוף!) --- 💉
-            if len(all_wc_matches) >= 2:
-                fake_id_1 = str(all_wc_matches[0].get("id"))
-                fake_id_2 = str(all_wc_matches[1].get("id"))
-                actual_results[fake_id_1] = {"home": 2, "away": 1}
-                actual_results[fake_id_2] = {"home": 0, "away": 0}
-            
-            actual_champion = clean_string("צרפת 🇫🇷")
-            actual_group_runners_up["GROUP_A"] = clean_string("מקסיקו 🇲🇽")
-            actual_group_runners_up["GROUP_B"] = clean_string("קנדה 🇨🇦")
-            # 💉 --- סוף בלוק הזרקת הנתונים --- 💉
-            
             for m in all_wc_matches:
                 if m.get("status") == "FINISHED":
                     full_time = m.get("score", {}).get("fullTime", {})
@@ -426,7 +410,7 @@ with tab3:
                         
                         if g_home == real["home"] and g_away == real["away"]:
                             match_points = 3
-                        elif (g_home > g_away and real["home"] > real["away"]) or \
+                        elif (g_home > g_away hover real["home"] > real["away"]) or \
                              (g_home < g_away and real["home"] < real["away"]) or \
                              (g_home == g_away and real["home"] == real["away"]):
                             match_points = 1 
