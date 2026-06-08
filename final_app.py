@@ -203,18 +203,22 @@ with tab1:
                     day_has_open = True
                     has_any_open_matches = True
                     
-                saved_indicator = " ✅ (נשמר)" if existing else ""
-                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}{saved_indicator}")
+                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
                 st.caption(lock_text)
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
                 with col1:
-                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
+                    # הוספת הוי הירוק לשם הקבוצה מעל התיבה
+                    h_label = f"✅ שערים ל-{home_heb}" if existing else f"שערים ל-{home_heb}"
+                    h_input = st.number_input(h_label, min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
                 with col2:
-                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
+                    a_label = f"✅ שערים ל-{away_heb}" if existing else f"שערים ל-{away_heb}"
+                    a_input = st.number_input(a_label, min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
                 with col3:
                     st.write("")
-                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}_{username}", value=default_joker, disabled=is_locked)
+                    # הוספת חיווי גם לג'וקר
+                    j_label = "🃏 ג'וקר (✅ נשמר)" if existing else "🃏 ג'וקר"
+                    j_check = st.checkbox(j_label, key=f"j_{match_id}_{username}", value=default_joker, disabled=is_locked)
                 
                 day_inputs[match_id] = {
                     "home_g": h_input, "away_g": a_input, "joker": j_check, "is_locked": is_locked,
