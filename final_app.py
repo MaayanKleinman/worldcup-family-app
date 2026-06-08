@@ -241,12 +241,12 @@ with tab1:
                                 # 💉 --- תחילת בלוק הזרקת נתוני דמה לבדיקות (למחוק בסוף!) --- 💉
                                 # לוקח אוטומטית את שני המשחקים הראשונים שמופיעים לך במסך וקובע להם תוצאה
                                 if len(all_wc_matches) >= 2:
-                                fake_id_1 = str(all_wc_matches[0].get("id"))
-                                fake_id_2 = str(all_wc_matches[1].get("id"))
+                                    fake_id_1 = str(all_wc_matches[0].get("id"))
+                                    fake_id_2 = str(all_wc_matches[1].get("id"))
                 
-                                actual_results[fake_id_1] = {"home": 2, "away": 1} # תוצאת אמת למשחק הראשון: 2-1
-                                actual_results[fake_id_2] = {"home": 0, "away": 0} # תוצאת אמת למשחק השני: 0-0
-                            
+                                    actual_results[fake_id_1] = {"home": 2, "away": 1} # תוצאת אמת למשחק הראשון: 2-1
+                                    actual_results[fake_id_2] = {"home": 0, "away": 0} # תוצאת אמת למשחק השני: 0-0
+                                
                                 # אלופה וסגנית מדומות לטובת בדיקת הבונוסים
                                 actual_champion = clean_string("צרפת 🇫🇷")
                                 actual_group_runners_up["GROUP_A"] = clean_string("מקסיקו 🇲🇽")
