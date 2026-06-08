@@ -91,8 +91,10 @@ def fetch_world_cup_matches():
     try:
         url = "https://api.football-data.org/v4/competitions/WC/matches"
         resp = requests.get(url, headers=HEADERS)
-        resp.raise_for_status()
-        return resp.json().get("matches", [])
+        data = resp.json()
+        if resp.status_code != 200 or "matches" not in data:
+            return None
+        return data.get("matches", [])
     except Exception:
         return None
 
@@ -101,8 +103,10 @@ def fetch_world_cup_standings():
     try:
         url = "https://api.football-data.org/v4/competitions/WC/standings"
         resp = requests.get(url, headers=HEADERS)
-        resp.raise_for_status()
-        return resp.json().get("standings", [])
+        data = resp.json()
+        if resp.status_code != 200 or "standings" not in data:
+            return None
+        return data.get("standings", [])
     except Exception:
         return None
 
@@ -149,7 +153,7 @@ with tab1:
 
     has_any_open_matches = False
     
-    for i in range(7): # מוגדר כרגע ל-7 ימים קדימה עבור הטסטים שלך
+    for i in range(7): # פתוח ל-7 ימים לטובת הטסטים
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         if i == 0:
             date_label = "היום"
@@ -187,7 +191,11 @@ with tab1:
                 match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
                 is_locked = now_il >= match_time or match.get("status") == "FINISHED"
                 
-                existing = user_daily_guesses.get(match_id, {})
+                # כאן אנחנו בודקים האם המשחק נשמר כבר
+                existing_data = user_daily_guesses.get(match_id)
+                is_saved = existing_data is not None
+                
+                existing = existing_data if is_saved else {}
                 default_home = safe_int(existing.get("home"))
                 default_away = safe_int(existing.get("away"))
                 default_joker = existing.get("joker", "NO") == "YES"
@@ -208,16 +216,15 @@ with tab1:
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
                 with col1:
-                    # הוספת הוי הירוק לשם הקבוצה מעל התיבה
-                    h_label = f"✅ שערים ל-{home_heb}" if existing else f"שערים ל-{home_heb}"
+                    # שינוי הכותרת ל"נשמר" אם קיים ניחוש
+                    h_label = f"✅ שערים ל-{home_heb}" if is_saved else f"שערים ל-{home_heb}"
                     h_input = st.number_input(h_label, min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
                 with col2:
-                    a_label = f"✅ שערים ל-{away_heb}" if existing else f"שערים ל-{away_heb}"
+                    a_label = f"✅ שערים ל-{away_heb}" if is_saved else f"שערים ל-{away_heb}"
                     a_input = st.number_input(a_label, min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
                 with col3:
                     st.write("")
-                    # הוספת חיווי גם לג'וקר
-                    j_label = "🃏 ג'וקר (✅ נשמר)" if existing else "🃏 ג'וקר"
+                    j_label = "🃏 ג'וקר (✅)" if is_saved else "🃏 ג'וקר"
                     j_check = st.checkbox(j_label, key=f"j_{match_id}_{username}", value=default_joker, disabled=is_locked)
                 
                 day_inputs[match_id] = {
@@ -238,19 +245,6 @@ with tab1:
                     else:
                         if sheet:
                             try:
-                                # 💉 --- תחילת בלוק הזרקת נתוני דמה לבדיקות (למחוק בסוף!) --- 💉
-                                # לוקח אוטומטית את שני המשחקים הראשונים שמופיעים לך במסך וקובע להם תוצאה
-                                if len(all_wc_matches) >= 2:
-                                    fake_id_1 = str(all_wc_matches[0].get("id"))
-                                    fake_id_2 = str(all_wc_matches[1].get("id"))
-                
-                                    actual_results[fake_id_1] = {"home": 2, "away": 1} # תוצאת אמת למשחק הראשון: 2-1
-                                    actual_results[fake_id_2] = {"home": 0, "away": 0} # תוצאת אמת למשחק השני: 0-0
-                                
-                                # אלופה וסגנית מדומות לטובת בדיקת הבונוסים
-                                actual_champion = clean_string("צרפת 🇫🇷")
-                                actual_group_runners_up["GROUP_A"] = clean_string("מקסיקו 🇲🇽")
-                                # 💉 --- סוף בלוק הזרקת הנתונים --- 💉
                                 guesses_sheet = sheet.worksheet("DailyGuesses")
                                 all_rows = get_cached_sheet_data("DailyGuesses")
                                     
@@ -379,6 +373,19 @@ with tab3:
         try:
             actual_results = {}
             actual_champion = None
+            actual_group_runners_up = {}
+            
+            # 💉 --- תחילת בלוק הזרקת נתוני דמה לבדיקות (למחוק בסוף!) --- 💉
+            if len(all_wc_matches) >= 2:
+                fake_id_1 = str(all_wc_matches[0].get("id"))
+                fake_id_2 = str(all_wc_matches[1].get("id"))
+                actual_results[fake_id_1] = {"home": 2, "away": 1}
+                actual_results[fake_id_2] = {"home": 0, "away": 0}
+            
+            actual_champion = clean_string("צרפת 🇫🇷")
+            actual_group_runners_up["GROUP_A"] = clean_string("מקסיקו 🇲🇽")
+            actual_group_runners_up["GROUP_B"] = clean_string("קנדה 🇨🇦")
+            # 💉 --- סוף בלוק הזרקת הנתונים --- 💉
             
             for m in all_wc_matches:
                 if m.get("status") == "FINISHED":
@@ -393,7 +400,6 @@ with tab3:
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
-            actual_group_runners_up = {}
             for group_data in all_wc_standings:
                 g_name = group_data.get("group")
                 g_table = group_data.get("table", [])
