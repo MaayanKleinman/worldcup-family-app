@@ -81,7 +81,8 @@ TOKEN = st.secrets["football_data_token"]
 HEADERS = {"X-Auth-Token": TOKEN}
 
 IL_TZ = ZoneInfo("Asia/Jerusalem")
-now_il = datetime.now(IL_TZ)
+# now_il = datetime.now(IL_TZ) # השהינו זמנית את הזמן האמיתי
+now_il = datetime(2026, 6, 11, 22, 30, tzinfo=IL_TZ) # קפצנו לעתיד!
 
 TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
 is_tournament_started = now_il >= TOURNAMENT_START_TIME
