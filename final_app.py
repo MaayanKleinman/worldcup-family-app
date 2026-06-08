@@ -23,7 +23,6 @@ def init_connection():
 
 sheet = init_connection()
 
-# 🚀 פונקציית ה-Caching החדשה שמונעת את השגיאה של גוגל (Error 429)
 @st.cache_data(ttl=60)
 def get_cached_sheet_data(worksheet_name):
     if sheet:
@@ -51,29 +50,17 @@ username = st.selectbox("👤 מי המנחש הנוכחי של המשפחה?", 
 st.write("---")
 
 TEAM_TRANSLATION = {
-    # בית א'
     "Mexico": "מקסיקו 🇲🇽", "South Africa": "דרום אפריקה 🇿🇦", "South Korea": "קוריאה הדרומית 🇰🇷", "Korea Republic": "קוריאה הדרומית 🇰🇷", "Korea": "קוריאה הדרומית 🇰🇷", "Czech Republic": "צ'כיה 🇨🇿", "Czechia": "צ'כיה 🇨🇿",
-    # בית ב'
     "Canada": "קנדה 🇨🇦", "Bosnia and Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Bosnia": "בוסניה והרצגובינה 🇧🇦", "Bosnia-Herzegovina": "בוסניה והרצגובינה 🇧🇦", "Qatar": "קטאר 🇶🇦", "Switzerland": "שווייץ 🇨🇭",
-    # בית ג'
     "Brazil": "ברזיל 🇧🇷", "Morocco": "מרוקו 🇲🇦", "Haiti": "האיטי 🇭🇹", "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-    # בית ד'
     "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸", "Paraguay": "פרגוואי 🇵🇾", "Australia": "אוסטרליה 🇦🇺", "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
-    # בית ה'
     "Germany": "גרמניה 🇩🇪", "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼", "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮", "Ecuador": "אקוודור 🇪🇨",
-    # בית ו'
     "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇹🇳",
-    # בית ז'
     "Belgium": "בלגיה 🇧🇪", "Egypt": "מצרים 🇪🇬", "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷", "New Zealand": "ניו זילנד 🇳🇿",
-    # בית ח'
     "Spain": "ספרד 🇪🇸", "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻", "Saudi Arabia": "ערב הסעודית 🇸🇦", "Uruguay": "אורוגוואי 🇺🇾",
-    # בית ט'
     "France": "צרפת 🇫🇷", "Senegal": "סנגל 🇸🇳", "Iraq": "עיראק 🇮🇶", "Norway": "נורווגיה 🇳🇴",
-    # בית י'
     "Argentina": "ארגנטינה 🇦🇷", "Algeria": "אלג'יריה 🇩🇿", "Austria": "אוסטריה 🇦🇹", "Jordan": "ירדן 🇯🇴",
-    # בית י"א
     "Portugal": "פורטוגל 🇵🇹", "DR Congo": "קונגו הדמוקרטית 🇨🇩", "Congo DR": "קונגו הדמוקרטית 🇨🇩", "Democratic Republic of the Congo": "קונגו הדמוקרטית 🇨🇩", "Uzbekistan": "אוזבקיסטן 🇺🇿", "Colombia": "קולומביה 🇨🇴",
-    # בית י"ב
     "England": "אנגליה 🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Croatia": "קרואטיה 🇭🇷", "Ghana": "גאנה 🇬🇭", "Panama": "פנמה 🇵🇦"
 }
 
@@ -128,7 +115,7 @@ if all_wc_matches is None:
 
 if all_wc_standings is None:
     st.warning("⚠️ תקלה זמנית מול פיפ\"א בטעינת טבלאות הבתים. ניתן להמשיך למלא ניחושים יומיים כרגיל! (ייתכן שבונוס הבתים בטבלה לא מעודכן כרגע).")
-    all_wc_standings = [] # מאפס את זה לרשימה ריקה כדי שהלולאה בטאב 3 לא תקרוס
+    all_wc_standings = [] 
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
 teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
@@ -162,7 +149,7 @@ with tab1:
 
     has_any_open_matches = False
     
-    for i in range(4):
+    for i in range(3):
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
         date_label = "היום" if i == 0 else "מחר" if i == 1 else "מחרתיים"
         
@@ -214,12 +201,13 @@ with tab1:
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
                 with col1:
-                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}", value=default_home, disabled=is_locked)
+                    # הוספנו את ה-username לתוך ה-key כדי להכריח את הזיכרון להתאפס בהחלפת משתמש
+                    h_input = st.number_input(f"שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
                 with col2:
-                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}", value=default_away, disabled=is_locked)
+                    a_input = st.number_input(f"שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
                 with col3:
                     st.write("")
-                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}", value=default_joker, disabled=is_locked)
+                    j_check = st.checkbox("🃏 ג'וקר", key=f"j_{match_id}_{username}", value=default_joker, disabled=is_locked)
                 
                 day_inputs[match_id] = {
                     "home_g": h_input, "away_g": a_input, "joker": j_check, "is_locked": is_locked,
@@ -228,7 +216,7 @@ with tab1:
                 st.write("---")
 
             if day_has_open:
-                if st.button(f"💾 שמור את ניחושי {date_label}", key=f"save_{current_loop_date_str}"):
+                if st.button(f"💾 שמור את ניחושי {date_label}", key=f"save_{current_loop_date_str}_{username}"):
                     joker_count = sum(1 for d in day_inputs.values() if d["joker"])
                     joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in day_inputs.values())
                     
@@ -262,7 +250,7 @@ with tab1:
                                     else:
                                         guesses_sheet.append_row(new_row, table_range="A1")
                                 
-                                get_cached_sheet_data.clear() # מנקה זיכרון אחרי כתיבה
+                                get_cached_sheet_data.clear() 
                                 st.success(f"🎉 כל הכבוד {username}! הניחושים שלך ליום {date_label} נשמרו בהצלחה!")
                                 st.rerun()
                             except Exception as e:
@@ -306,28 +294,29 @@ with tab2:
     def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
     def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
 
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, disabled=is_tournament_started)
+    # הוספת מזהה אישי ל-key גם בטאב 2 למניעת שגיאות דומות
+    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, disabled=is_tournament_started, key=f"champ_{username}")
     st.write("---")
     st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
     
     col1, col2 = st.columns(2)
     with col1:
-        group_a = st.selectbox("מקום שני בית א'", teams_a, index=def_a, disabled=is_tournament_started)
-        group_b = st.selectbox("מקום שני בית ב'", teams_b, index=def_b, disabled=is_tournament_started)
-        group_c = st.selectbox("מקום שני בית ג'", teams_c, index=def_c, disabled=is_tournament_started)
-        group_d = st.selectbox("מקום שני בית ד'", teams_d, index=def_d, disabled=is_tournament_started)
-        group_e = st.selectbox("מקום שני בית ה'", teams_e, index=def_e, disabled=is_tournament_started)
-        group_f = st.selectbox("מקום שני בית ו'", teams_f, index=def_f, disabled=is_tournament_started)
+        group_a = st.selectbox("מקום שני בית א'", teams_a, index=def_a, disabled=is_tournament_started, key=f"g_a_{username}")
+        group_b = st.selectbox("מקום שני בית ב'", teams_b, index=def_b, disabled=is_tournament_started, key=f"g_b_{username}")
+        group_c = st.selectbox("מקום שני בית ג'", teams_c, index=def_c, disabled=is_tournament_started, key=f"g_c_{username}")
+        group_d = st.selectbox("מקום שני בית ד'", teams_d, index=def_d, disabled=is_tournament_started, key=f"g_d_{username}")
+        group_e = st.selectbox("מקום שני בית ה'", teams_e, index=def_e, disabled=is_tournament_started, key=f"g_e_{username}")
+        group_f = st.selectbox("מקום שני בית ו'", teams_f, index=def_f, disabled=is_tournament_started, key=f"g_f_{username}")
     with col2:
-        group_g = st.selectbox("מקום שני בית ז'", teams_g, index=def_g, disabled=is_tournament_started)
-        group_h = st.selectbox("מקום שני בית ח'", teams_h, index=def_h, disabled=is_tournament_started)
-        group_i = st.selectbox("מקום שני בית ט'", teams_i, index=def_i, disabled=is_tournament_started)
-        group_j = st.selectbox("מקום שני בית י'", teams_j, index=def_j, disabled=is_tournament_started)
-        group_k = st.selectbox("מקום שני בית י\"א", teams_k, index=def_k, disabled=is_tournament_started)
-        group_l = st.selectbox("מקום שני בית י\"ב", teams_l, index=def_l, disabled=is_tournament_started)
+        group_g = st.selectbox("מקום שני בית ז'", teams_g, index=def_g, disabled=is_tournament_started, key=f"g_g_{username}")
+        group_h = st.selectbox("מקום שני בית ח'", teams_h, index=def_h, disabled=is_tournament_started, key=f"g_h_{username}")
+        group_i = st.selectbox("מקום שני בית ט'", teams_i, index=def_i, disabled=is_tournament_started, key=f"g_i_{username}")
+        group_j = st.selectbox("מקום שני בית י'", teams_j, index=def_j, disabled=is_tournament_started, key=f"g_j_{username}")
+        group_k = st.selectbox("מקום שני בית י\"א", teams_k, index=def_k, disabled=is_tournament_started, key=f"g_k_{username}")
+        group_l = st.selectbox("מקום שני בית י\"ב", teams_l, index=def_l, disabled=is_tournament_started, key=f"g_l_{username}")
 
     st.write("---")
-    if st.button("💾 שמור ניחושי טורניר ארוכי טווח", disabled=is_tournament_started):
+    if st.button("💾 שמור ניחושי טורניר ארוכי טווח", disabled=is_tournament_started, key=f"save_tour_{username}"):
         if sheet:
             try:
                 tournament_sheet = sheet.worksheet("TournamentGuesses")
@@ -336,7 +325,7 @@ with tab2:
                 if len(current_all_t_rows) == 0:
                     headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
                     tournament_sheet.append_row(headers, table_range="A1")
-                    current_all_t_rows = [headers] # מעדכן את המערך הלוקאלי כדי לא לדרוס את הכותרות
+                    current_all_t_rows = [headers] 
                 
                 t_row = [
                     datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
@@ -354,7 +343,7 @@ with tab2:
                 else:
                     tournament_sheet.append_row(t_row, table_range="A1")
                 
-                get_cached_sheet_data.clear() # מנקה זיכרון אחרי כתיבה
+                get_cached_sheet_data.clear() 
                 st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך עודכנו בטבלה!")
             except Exception as e:
                 st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
@@ -385,7 +374,7 @@ with tab3:
             for group_data in all_wc_standings:
                 g_name = group_data.get("group")
                 g_table = group_data.get("table", [])
-                if len(g_table) > 1: # מוודא שיש קבוצה במקום השני
+                if len(g_table) > 1:
                     second_team_en = g_table[1].get("team", {}).get("name")
                     actual_group_runners_up[g_name] = clean_string(get_team_name_heb(second_team_en))
 
@@ -407,11 +396,11 @@ with tab3:
                         match_points = 0
                         
                         if g_home == real["home"] and g_away == real["away"]:
-                            match_points = 3 # בול בתוצאה
+                            match_points = 3
                         elif (g_home > g_away and real["home"] > real["away"]) or \
                              (g_home < g_away and real["home"] < real["away"]) or \
                              (g_home == g_away and real["home"] == real["away"]):
-                            match_points = 1 # כיוון נכון בלבד
+                            match_points = 1 
                             
                         if g_joker: 
                             match_points *= 2
@@ -438,12 +427,12 @@ with tab3:
                             if group_key in actual_group_runners_up and len(row) > col_idx:
                                 user_pick_clean = clean_string(row[col_idx])
                                 if actual_group_runners_up[group_key] in user_pick_clean:
-                                    bonus_points += 2 # ניקוד מעודכן על פגיעה במקום שני
+                                    bonus_points += 2 
                                     
                         if actual_champion and len(row) > 2:
                             user_champ_clean = clean_string(row[2])
                             if actual_champion in user_champ_clean:
-                                bonus_points += 8 # ניקוד מעודכן לאלופה
+                                bonus_points += 8 
                                 
                         scores_table[t_user]["בונוס טורניר"] += bonus_points
 
