@@ -81,8 +81,7 @@ TOKEN = st.secrets["football_data_token"]
 HEADERS = {"X-Auth-Token": TOKEN}
 
 IL_TZ = ZoneInfo("Asia/Jerusalem")
-# now_il = datetime.now(IL_TZ) # השהינו זמנית את הזמן האמיתי
-now_il = datetime(2026, 6, 11, 22, 30, tzinfo=IL_TZ) # קפצנו לעתיד!
+now_il = datetime.now(IL_TZ) 
 
 TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
 is_tournament_started = now_il >= TOURNAMENT_START_TIME
@@ -204,7 +203,8 @@ with tab1:
                     day_has_open = True
                     has_any_open_matches = True
                     
-                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
+                saved_indicator = " ✅ (נשמר)" if existing else ""
+                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}{saved_indicator}")
                 st.caption(lock_text)
                 
                 col1, col2, col3 = st.columns([3, 3, 2])
