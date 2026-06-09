@@ -55,7 +55,7 @@ TEAM_TRANSLATION = {
     "Brazil": "ברזיל 🇧🇷", "Morocco": "מרוקו 🇲🇦", "Haiti": "האיטי 🇭🇹", "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
     "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸", "Paraguay": "פרגוואי 🇵🇾", "Australia": "אוסטרליה 🇦🇺", "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
     "Germany": "גרמניה 🇩🇪", "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼", "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮", "Ecuador": "אקוודור 🇪🇨",
-    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇳🇱",
+    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇹🇳",
     "Belgium": "בלגיה 🇧🇪", "Egypt": "מצרים 🇪🇬", "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷", "New Zealand": "ניו זילנד 🇳🇿",
     "Spain": "ספרד 🇪🇸", "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻", "Saudi Arabia": "ערב הסעודית 🇸🇦", "Uruguay": "אורוגוואי 🇺🇾",
     "France": "צרפת 🇫🇷", "Senegal": "סנגל 🇸🇳", "Iraq": "עיראק 🇮🇶", "Norway": "נורווגיה 🇳🇴",
@@ -86,8 +86,7 @@ now_il = datetime.now(IL_TZ)
 TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
 is_tournament_started = now_il >= TOURNAMENT_START_TIME
 
-# --- מנגנון חסין לשגיאות: לא נשמור שגיאות בזיכרון! ---
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=600)
 def _fetch_matches_cached():
     url = "https://api.football-data.org/v4/competitions/WC/matches"
     resp = requests.get(url, headers=HEADERS)
@@ -98,7 +97,7 @@ def _fetch_matches_cached():
         raise Exception("No matches in data")
     return data.get("matches", [])
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=600)
 def _fetch_standings_cached():
     url = "https://api.football-data.org/v4/competitions/WC/standings"
     resp = requests.get(url, headers=HEADERS)
@@ -120,17 +119,20 @@ def fetch_world_cup_standings():
         return _fetch_standings_cached()
     except Exception:
         return None
+
 # --------------------------------------------------------
 
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
 
-if not all_wc_matches: 
-    st.error("❌ תקלה קריטית בשליפת המשחקים משרתי פיפ\"א! לא ניתן להמשיך. אנא רעננו את העמוד או נסו מאוחר יותר.")
+if all_wc_matches is None:
+    st.error(
+        "❌ לא ניתן כרגע לטעון את נתוני המשחקים. "
+        "אנא המתינו מספר דקות ונסו שוב."
+    )
     st.stop()
-
 if all_wc_standings is None:
-    st.warning("⚠️ תקלה זמנית מול פיפ\"א בטעינת טבלאות הבתים. ניתן להמשיך למלא ניחושים יומיים כרגיל! (ייתכן שבונוס הבתים בטבלה לא מעודכן כרגע).")
+    st.warning("⚠️ תקלה זמנית בטעינת טבלאות הבתים. ניתן להמשיך למלא ניחושים יומיים כרגיל!")
     all_wc_standings = [] 
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
@@ -197,7 +199,6 @@ with tab1:
             
             day_inputs = {}
             
-            # 🛡️ כאן הפיקס! שימוש בטופס Streamlit מונע רענון של הדף על כל קליק
             if day_has_open:
                 has_any_open_matches = True
                 with st.form(key=f"form_{current_loop_date_str}_{username}"):
@@ -411,7 +412,6 @@ with tab2:
         def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
         def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
 
-        # 🛡️ עטפנו גם את טופס הטורניר הארוך ב-Form כדי למנוע קריסות בזמן בחירת 12 נבחרות
         with st.form(key=f"tour_form_{username}"):
             champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, key=f"champ_{username}")
             st.write("---")
