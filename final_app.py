@@ -132,8 +132,7 @@ if all_wc_matches is None:
     )
     st.stop()
 if all_wc_standings is None:
-    st.warning("⚠️ תקלה זמנית בטעינת טבלאות הבתים. ניתן להמשיך למלא ניחושים יומיים כרגיל!")
-    all_wc_standings = [] 
+    all_wc_standings = []
 
 teams_a = ["מקסיקו 🇲🇽", "דרום אפריקה 🇿🇦", "קוריאה הדרומית 🇰🇷", "צ'כיה 🇨🇿"]
 teams_b = ["קנדה 🇨🇦", "בוסניה והרצגובינה 🇧🇦", "קטאר 🇶🇦", "שווייץ 🇨🇭"]
