@@ -399,8 +399,19 @@ with tab3:
             for group_data in all_wc_standings:
                 g_name = group_data.get("group")
                 g_table = group_data.get("table", [])
-                if len(g_table) > 1:
-                    second_team_en = g_table[1].get("team", {}).get("name")
+            
+                second_row = None
+            
+                for row in g_table:
+                    if row.get("position") == 2:
+                        second_row = row
+                        break
+            
+                if second_row is None and len(g_table) > 1:
+                    second_row = g_table[1]
+            
+                if second_row:
+                    second_team_en = second_row.get("team", {}).get("name")
                     actual_group_runners_up[g_name] = clean_string(get_team_name_heb(second_team_en))
 
             user_guesses = get_cached_sheet_data("DailyGuesses")
