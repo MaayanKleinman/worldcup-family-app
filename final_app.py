@@ -36,28 +36,7 @@ def get_cached_sheet_data(worksheet_name):
             return []
     return []
 
-# פונקציות ה-API עם הדיבאג
-@st.cache_data(ttl=600)
-def fetch_world_cup_matches():
-    url = "https://api.football-data.org/v4/competitions/WC/matches"
-    resp = requests.get(url, headers=HEADERS)
-    if resp.status_code != 200:
-        st.error(f"DEBUG Error: קוד שגיאה {resp.status_code} במשיכת משחקים. פירוט: {resp.text}")
-        return None
-    data = resp.json()
-    return data.get("matches", [])
 
-@st.cache_data(ttl=600)
-def fetch_world_cup_standings():
-    url = "https://api.football-data.org/v4/competitions/WC/standings"
-    resp = requests.get(url, headers=HEADERS)
-    if resp.status_code != 200:
-        st.error(f"DEBUG Error: קוד שגיאה {resp.status_code} במשיכת טבלאות. פירוט: {resp.text}")
-        return None
-    data = resp.json()
-    return data.get("standings", [])
-
-# -----------------------------------
 # 👥 שמות המשתתפים הרשמיים של המשפחה
 FAMILY_MEMBERS = ["נחש ינחש" , "מחליד", "המכשפה" , "צבצב", "יובל המנוול", "הזקן", "רתם המצחין", "עדיאל קורקוס"]
 
