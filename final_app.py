@@ -55,7 +55,7 @@ TEAM_TRANSLATION = {
     "Brazil": "ברזיל 🇧🇷", "Morocco": "מרוקו 🇲🇦", "Haiti": "האיטי 🇭🇹", "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
     "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸", "Paraguay": "פרגוואי 🇵🇾", "Australia": "אוסטרליה 🇦🇺", "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
     "Germany": "גרמניה 🇩🇪", "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼", "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮", "Ecuador": "אקוודור 🇪🇨",
-    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇹🇳",
+    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇳🇱",
     "Belgium": "בלגיה 🇧🇪", "Egypt": "מצרים 🇪🇬", "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷", "New Zealand": "ניו זילנד 🇳🇿",
     "Spain": "ספרד 🇪🇸", "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻", "Saudi Arabia": "ערב הסעודית 🇸🇦", "Uruguay": "אורוגוואי 🇺🇾",
     "France": "צרפת 🇫🇷", "Senegal": "סנגל 🇸🇳", "Iraq": "עיראק 🇮🇶", "Norway": "נורווגיה 🇳🇴",
@@ -92,7 +92,7 @@ def _fetch_matches_cached():
     url = "https://api.football-data.org/v4/competitions/WC/matches"
     resp = requests.get(url, headers=HEADERS)
     if resp.status_code != 200:
-        raise Exception(f"API Error {resp.status_code}") # זורק שגיאה כדי שלא יישמר בזיכרון
+        raise Exception(f"API Error {resp.status_code}")
     data = resp.json()
     if "matches" not in data:
         raise Exception("No matches in data")
@@ -184,65 +184,75 @@ with tab1:
                     daily_events.append(m)
             
         if daily_events:
+            day_has_open = False
+            for match in daily_events:
+                utc_time_str = match.get("utcDate").replace("Z", "+00:00")
+                match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
+                is_locked = now_il >= match_time or match.get("status") == "FINISHED"
+                if not is_locked:
+                    day_has_open = True
+
             st.markdown(f"### 📅 משחקי {date_label} ({current_loop_date_str.split('-')[2]}/{current_loop_date_str.split('-')[1]}):")
             total_games_today = len(daily_events)
             
             day_inputs = {}
-            day_has_open = False
             
-            for match in daily_events:
-                match_id = str(match.get("id"))
-                home_en = match.get("homeTeam", {}).get("name")
-                away_en = match.get("awayTeam", {}).get("name")
-                home_heb = get_team_name_heb(home_en)
-                away_heb = get_team_name_heb(away_en)
-                
-                utc_time_str = match.get("utcDate").replace("Z", "+00:00")
-                match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
-                is_locked = now_il >= match_time or match.get("status") == "FINISHED"
-                
-                existing_data = user_daily_guesses.get(match_id)
-                is_saved = existing_data is not None
-                
-                existing = existing_data if is_saved else {}
-                default_home = safe_int(existing.get("home"))
-                default_away = safe_int(existing.get("away"))
-                default_joker = existing.get("joker", "NO") == "YES"
-                
-                if match.get("status") == "FINISHED":
-                    score_home = match.get("score", {}).get("fullTime", {}).get("home")
-                    score_away = match.get("score", {}).get("fullTime", {}).get("away")
-                    lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
-                elif is_locked:
-                    lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
-                else:
-                    lock_text = f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
-                    day_has_open = True
-                    has_any_open_matches = True
-                    
-                st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
-                st.caption(lock_text)
-                
-                col1, col2, col3 = st.columns([3, 3, 2])
-                with col1:
-                    h_label = f"✅ שערים ל-{home_heb}" if is_saved else f"שערים ל-{home_heb}"
-                    h_input = st.number_input(h_label, min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
-                with col2:
-                    a_label = f"✅ שערים ל-{away_heb}" if is_saved else f"שערים ל-{away_heb}"
-                    a_input = st.number_input(a_label, min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
-                with col3:
-                    st.write("")
-                    j_label = "🃏 ג'וקר (✅)" if is_saved else "🃏 ג'וקר"
-                    j_check = st.checkbox(j_label, key=f"j_{match_id}_{username}", value=default_joker, disabled=is_locked)
-                
-                day_inputs[match_id] = {
-                    "home_g": h_input, "away_g": a_input, "joker": j_check, "is_locked": is_locked,
-                    "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today
-                }
-                st.write("---")
-
+            # 🛡️ כאן הפיקס! שימוש בטופס Streamlit מונע רענון של הדף על כל קליק
             if day_has_open:
-                if st.button(f"💾 שמור את ניחושי {date_label}", key=f"save_{current_loop_date_str}_{username}"):
+                has_any_open_matches = True
+                with st.form(key=f"form_{current_loop_date_str}_{username}"):
+                    for match in daily_events:
+                        match_id = str(match.get("id"))
+                        home_en = match.get("homeTeam", {}).get("name")
+                        away_en = match.get("awayTeam", {}).get("name")
+                        home_heb = get_team_name_heb(home_en)
+                        away_heb = get_team_name_heb(away_en)
+                        
+                        utc_time_str = match.get("utcDate").replace("Z", "+00:00")
+                        match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
+                        is_locked = now_il >= match_time or match.get("status") == "FINISHED"
+                        
+                        existing_data = user_daily_guesses.get(match_id)
+                        is_saved = existing_data is not None
+                        
+                        existing = existing_data if is_saved else {}
+                        default_home = safe_int(existing.get("home"))
+                        default_away = safe_int(existing.get("away"))
+                        default_joker = existing.get("joker", "NO") == "YES"
+                        
+                        if match.get("status") == "FINISHED":
+                            score_home = match.get("score", {}).get("fullTime", {}).get("home")
+                            score_away = match.get("score", {}).get("fullTime", {}).get("away")
+                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
+                        elif is_locked:
+                            lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
+                        else:
+                            lock_text = f"⏰ שעת פתיחה: {match_time.strftime('%H:%M')}"
+                            
+                        st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
+                        st.caption(lock_text)
+                        
+                        col1, col2, col3 = st.columns([3, 3, 2])
+                        with col1:
+                            h_label = f"✅ שערים ל-{home_heb}" if is_saved else f"שערים ל-{home_heb}"
+                            h_input = st.number_input(h_label, min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=is_locked)
+                        with col2:
+                            a_label = f"✅ שערים ל-{away_heb}" if is_saved else f"שערים ל-{away_heb}"
+                            a_input = st.number_input(a_label, min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=is_locked)
+                        with col3:
+                            st.write("")
+                            j_label = "🃏 ג'וקר (✅)" if is_saved else "🃏 ג'וקר"
+                            j_check = st.checkbox(j_label, key=f"j_{match_id}_{username}", value=default_joker, disabled=is_locked)
+                        
+                        day_inputs[match_id] = {
+                            "home_g": h_input, "away_g": a_input, "joker": j_check, "is_locked": is_locked,
+                            "name": f"{home_en} vs {away_en}", "total_games_day": total_games_today
+                        }
+                        st.write("---")
+                    
+                    submit_button = st.form_submit_button(f"💾 שמור את ניחושי {date_label}")
+                    
+                if submit_button:
                     joker_count = sum(1 for d in day_inputs.values() if d["joker"])
                     joker_in_short_day = any(d["joker"] and d["total_games_day"] < 3 for d in day_inputs.values())
                     
@@ -282,6 +292,42 @@ with tab1:
                             except Exception as e:
                                 st.error(f"❌ שגיאה בשמירה: {e}")
             else:
+                for match in daily_events:
+                    match_id = str(match.get("id"))
+                    home_en = match.get("homeTeam", {}).get("name")
+                    away_en = match.get("awayTeam", {}).get("name")
+                    home_heb = get_team_name_heb(home_en)
+                    away_heb = get_team_name_heb(away_en)
+                    
+                    utc_time_str = match.get("utcDate").replace("Z", "+00:00")
+                    match_time = datetime.fromisoformat(utc_time_str).astimezone(IL_TZ)
+                    
+                    existing_data = user_daily_guesses.get(match_id)
+                    is_saved = existing_data is not None
+                    existing = existing_data if is_saved else {}
+                    default_home = safe_int(existing.get("home"))
+                    default_away = safe_int(existing.get("away"))
+                    default_joker = existing.get("joker", "NO") == "YES"
+                    
+                    if match.get("status") == "FINISHED":
+                        score_home = match.get("score", {}).get("fullTime", {}).get("home")
+                        score_away = match.get("score", {}).get("fullTime", {}).get("away")
+                        lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
+                    else:
+                        lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
+                        
+                    st.markdown(f"#### 🏟️ {home_heb}  נ ג ד  {away_heb}")
+                    st.caption(lock_text)
+                    
+                    col1, col2, col3 = st.columns([3, 3, 2])
+                    with col1:
+                        st.number_input(f"🔒 שערים ל-{home_heb}", min_value=0, max_value=10, step=1, key=f"h_{match_id}_{username}", value=default_home, disabled=True)
+                    with col2:
+                        st.number_input(f"🔒 שערים ל-{away_heb}", min_value=0, max_value=10, step=1, key=f"a_{match_id}_{username}", value=default_away, disabled=True)
+                    with col3:
+                        st.write("")
+                        st.checkbox("🃏 ג'וקר", key=f"j_{match_id}_{username}", value=default_joker, disabled=True)
+                    st.write("---")
                 st.info(f"🔒 כל המשחקים של יום {date_label} כבר נעולים או הסתיימו.")
 
     if not has_any_open_matches:
@@ -292,86 +338,136 @@ with tab2:
     
     if is_tournament_started:
         st.error("🔒 הטורניר החל רשמית! חלק זה נעול לחלוטין ולא ניתן לשנות ניחושים יותר.")
+        
+        saved_t_guesses = []
+        all_t_rows = get_cached_sheet_data("TournamentGuesses")
+        if all_t_rows:
+            for row in all_t_rows:
+                if len(row) > 1 and row[1].strip() == username.strip():
+                    saved_t_guesses = row
+                    break
+
+        def get_idx(lst, val):
+            return lst.index(val) if val in lst else 0
+
+        def_champ = get_idx(ALL_48_TEAMS, saved_t_guesses[2]) if len(saved_t_guesses) > 2 else 0
+        def_a = get_idx(teams_a, saved_t_guesses[3]) if len(saved_t_guesses) > 3 else 0
+        def_b = get_idx(teams_b, saved_t_guesses[4]) if len(saved_t_guesses) > 4 else 0
+        def_c = get_idx(teams_c, saved_t_guesses[5]) if len(saved_t_guesses) > 5 else 0
+        def_d = get_idx(teams_d, saved_t_guesses[6]) if len(saved_t_guesses) > 6 else 0
+        def_e = get_idx(teams_e, saved_t_guesses[7]) if len(saved_t_guesses) > 7 else 0
+        def_f = get_idx(teams_f, saved_t_guesses[8]) if len(saved_t_guesses) > 8 else 0
+        def_g = get_idx(teams_g, saved_t_guesses[9]) if len(saved_t_guesses) > 9 else 0
+        def_h = get_idx(teams_h, saved_t_guesses[10]) if len(saved_t_guesses) > 10 else 0
+        def_i = get_idx(teams_i, saved_t_guesses[11]) if len(saved_t_guesses) > 11 else 0
+        def_j = get_idx(teams_j, saved_t_guesses[12]) if len(saved_t_guesses) > 12 else 0
+        def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
+        def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
+
+        st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, disabled=True, key=f"champ_{username}")
+        st.write("---")
+        st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.selectbox("מקום שני בית א'", teams_a, index=def_a, disabled=True, key=f"g_a_{username}")
+            st.selectbox("מקום שני בית ב'", teams_b, index=def_b, disabled=True, key=f"g_b_{username}")
+            st.selectbox("מקום שני בית ג'", teams_c, index=def_c, disabled=True, key=f"g_c_{username}")
+            st.selectbox("מקום שני בית ד'", teams_d, index=def_d, disabled=True, key=f"g_d_{username}")
+            st.selectbox("מקום שני בית ה'", teams_e, index=def_e, disabled=True, key=f"g_e_{username}")
+            st.selectbox("מקום שני בית ו'", teams_f, index=def_f, disabled=True, key=f"g_f_{username}")
+        with col2:
+            st.selectbox("מקום שני בית ז'", teams_g, index=def_g, disabled=True, key=f"g_g_{username}")
+            st.selectbox("מקום שני בית ח'", teams_h, index=def_h, disabled=True, key=f"g_h_{username}")
+            st.selectbox("מקום שני בית ט'", teams_i, index=def_i, disabled=True, key=f"g_i_{username}")
+            st.selectbox("מקום שני בית י'", teams_j, index=def_j, disabled=True, key=f"g_j_{username}")
+            st.selectbox("מקום שני בית י\"א", teams_k, index=def_k, disabled=True, key=f"g_k_{username}")
+            st.selectbox("מקום שני בית י\"ב", teams_l, index=def_l, disabled=True, key=f"g_l_{username}")
     else:
         st.info("⏰ חלק זה יינעל אוטומטית ב-11 ליוני 2026 בשעה 22:00 עם שריקת הפתיחה של המונדיאל!")
-    
-    saved_t_guesses = []
-    all_t_rows = get_cached_sheet_data("TournamentGuesses")
-    if all_t_rows:
-        for row in all_t_rows:
-            if len(row) > 1 and row[1].strip() == username.strip():
-                saved_t_guesses = row
-                break
+        
+        saved_t_guesses = []
+        all_t_rows = get_cached_sheet_data("TournamentGuesses")
+        if all_t_rows:
+            for row in all_t_rows:
+                if len(row) > 1 and row[1].strip() == username.strip():
+                    saved_t_guesses = row
+                    break
 
-    def get_idx(lst, val):
-        return lst.index(val) if val in lst else 0
+        def get_idx(lst, val):
+            return lst.index(val) if val in lst else 0
 
-    def_champ = get_idx(ALL_48_TEAMS, saved_t_guesses[2]) if len(saved_t_guesses) > 2 else 0
-    def_a = get_idx(teams_a, saved_t_guesses[3]) if len(saved_t_guesses) > 3 else 0
-    def_b = get_idx(teams_b, saved_t_guesses[4]) if len(saved_t_guesses) > 4 else 0
-    def_c = get_idx(teams_c, saved_t_guesses[5]) if len(saved_t_guesses) > 5 else 0
-    def_d = get_idx(teams_d, saved_t_guesses[6]) if len(saved_t_guesses) > 6 else 0
-    def_e = get_idx(teams_e, saved_t_guesses[7]) if len(saved_t_guesses) > 7 else 0
-    def_f = get_idx(teams_f, saved_t_guesses[8]) if len(saved_t_guesses) > 8 else 0
-    def_g = get_idx(teams_g, saved_t_guesses[9]) if len(saved_t_guesses) > 9 else 0
-    def_h = get_idx(teams_h, saved_t_guesses[10]) if len(saved_t_guesses) > 10 else 0
-    def_i = get_idx(teams_i, saved_t_guesses[11]) if len(saved_t_guesses) > 11 else 0
-    def_j = get_idx(teams_j, saved_t_guesses[12]) if len(saved_t_guesses) > 12 else 0
-    def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
-    def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
+        def_champ = get_idx(ALL_48_TEAMS, saved_t_guesses[2]) if len(saved_t_guesses) > 2 else 0
+        def_a = get_idx(teams_a, saved_t_guesses[3]) if len(saved_t_guesses) > 3 else 0
+        def_b = get_idx(teams_b, saved_t_guesses[4]) if len(saved_t_guesses) > 4 else 0
+        def_c = get_idx(teams_c, saved_t_guesses[5]) if len(saved_t_guesses) > 5 else 0
+        def_d = get_idx(teams_d, saved_t_guesses[6]) if len(saved_t_guesses) > 6 else 0
+        def_e = get_idx(teams_e, saved_t_guesses[7]) if len(saved_t_guesses) > 7 else 0
+        def_f = get_idx(teams_f, saved_t_guesses[8]) if len(saved_t_guesses) > 8 else 0
+        def_g = get_idx(teams_g, saved_t_guesses[9]) if len(saved_t_guesses) > 9 else 0
+        def_h = get_idx(teams_h, saved_t_guesses[10]) if len(saved_t_guesses) > 10 else 0
+        def_i = get_idx(teams_i, saved_t_guesses[11]) if len(saved_t_guesses) > 11 else 0
+        def_j = get_idx(teams_j, saved_t_guesses[12]) if len(saved_t_guesses) > 12 else 0
+        def_k = get_idx(teams_k, saved_t_guesses[13]) if len(saved_t_guesses) > 13 else 0
+        def_l = get_idx(teams_l, saved_t_guesses[14]) if len(saved_t_guesses) > 14 else 0
 
-    champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, disabled=is_tournament_started, key=f"champ_{username}")
-    st.write("---")
-    st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        group_a = st.selectbox("מקום שני בית א'", teams_a, index=def_a, disabled=is_tournament_started, key=f"g_a_{username}")
-        group_b = st.selectbox("מקום שני בית ב'", teams_b, index=def_b, disabled=is_tournament_started, key=f"g_b_{username}")
-        group_c = st.selectbox("מקום שני בית ג'", teams_c, index=def_c, disabled=is_tournament_started, key=f"g_c_{username}")
-        group_d = st.selectbox("מקום שני בית ד'", teams_d, index=def_d, disabled=is_tournament_started, key=f"g_d_{username}")
-        group_e = st.selectbox("מקום שני בית ה'", teams_e, index=def_e, disabled=is_tournament_started, key=f"g_e_{username}")
-        group_f = st.selectbox("מקום שני בית ו'", teams_f, index=def_f, disabled=is_tournament_started, key=f"g_f_{username}")
-    with col2:
-        group_g = st.selectbox("מקום שני בית ז'", teams_g, index=def_g, disabled=is_tournament_started, key=f"g_g_{username}")
-        group_h = st.selectbox("מקום שני בית ח'", teams_h, index=def_h, disabled=is_tournament_started, key=f"g_h_{username}")
-        group_i = st.selectbox("מקום שני בית ט'", teams_i, index=def_i, disabled=is_tournament_started, key=f"g_i_{username}")
-        group_j = st.selectbox("מקום שני בית י'", teams_j, index=def_j, disabled=is_tournament_started, key=f"g_j_{username}")
-        group_k = st.selectbox("מקום שני בית י\"א", teams_k, index=def_k, disabled=is_tournament_started, key=f"g_k_{username}")
-        group_l = st.selectbox("מקום שני בית י\"ב", teams_l, index=def_l, disabled=is_tournament_started, key=f"g_l_{username}")
+        # 🛡️ עטפנו גם את טופס הטורניר הארוך ב-Form כדי למנוע קריסות בזמן בחירת 12 נבחרות
+        with st.form(key=f"tour_form_{username}"):
+            champ = st.selectbox("🥇 מי תהיה האלופה ותניף את הגביע בסוף הטורניר?", ALL_48_TEAMS, index=def_champ, key=f"champ_{username}")
+            st.write("---")
+            st.markdown("#### ⚽ מי יסיימו במקום השני בבתים? (2 נק' לכל תשובה נכונה)")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                group_a = st.selectbox("מקום שני בית א'", teams_a, index=def_a, key=f"g_a_{username}")
+                group_b = st.selectbox("מקום שני בית ב'", teams_b, index=def_b, key=f"g_b_{username}")
+                group_c = st.selectbox("מקום שני בית ג'", teams_c, index=def_c, key=f"g_c_{username}")
+                group_d = st.selectbox("מקום שני בית ד'", teams_d, index=def_d, key=f"g_d_{username}")
+                group_e = st.selectbox("מקום שני בית ה'", teams_e, index=def_e, key=f"g_e_{username}")
+                group_f = st.selectbox("מקום שני בית ו'", teams_f, index=def_f, key=f"g_f_{username}")
+            with col2:
+                group_g = st.selectbox("מקום שני בית ז'", teams_g, index=def_g, key=f"g_g_{username}")
+                group_h = st.selectbox("מקום שני בית ח'", teams_h, index=def_h, key=f"g_h_{username}")
+                group_i = st.selectbox("מקום שני בית ט'", teams_i, index=def_i, key=f"g_i_{username}")
+                group_j = st.selectbox("מקום שני בית י'", teams_j, index=def_j, key=f"g_j_{username}")
+                group_k = st.selectbox("מקום שני בית י\"א", teams_k, index=def_k, key=f"g_k_{username}")
+                group_l = st.selectbox("מקום שני בית י\"ב", teams_l, index=def_l, key=f"g_l_{username}")
 
-    st.write("---")
-    if st.button("💾 שמור ניחושי טורניר ארוכי טווח", disabled=is_tournament_started, key=f"save_tour_{username}"):
-        if sheet:
-            try:
-                tournament_sheet = sheet.worksheet("TournamentGuesses")
-                current_all_t_rows = get_cached_sheet_data("TournamentGuesses")
-                
-                if len(current_all_t_rows) == 0:
-                    headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
-                    tournament_sheet.append_row(headers, table_range="A1")
-                    current_all_t_rows = [headers] 
-                
-                t_row = [
-                    datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
-                    username, champ, group_a, group_b, group_c, group_d, group_e, group_f, group_g, group_h, group_i, group_j, group_k, group_l
-                ]
-                
-                existing_t_idx = None
-                for idx, row in enumerate(current_all_t_rows):
-                    if len(row) > 1 and row[1].strip() == username.strip():
-                        existing_t_idx = idx + 1
-                        break
-                        
-                if existing_t_idx:
-                    tournament_sheet.update(f"A{existing_t_idx}:O{existing_t_idx}", [t_row])
-                else:
-                    tournament_sheet.append_row(t_row, table_range="A1")
-                
-                get_cached_sheet_data.clear() 
-                st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך עודכנו בטבלה!")
-            except Exception as e:
-                st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
+            st.write("---")
+            save_tour = st.form_submit_button("💾 שמור ניחושי טורניר ארוכי טווח")
+            
+        if save_tour:
+            if sheet:
+                try:
+                    tournament_sheet = sheet.worksheet("TournamentGuesses")
+                    current_all_t_rows = get_cached_sheet_data("TournamentGuesses")
+                    
+                    if len(current_all_t_rows) == 0:
+                        headers = ["Timestamp", "Username", "Champion", "Group A", "Group B", "Group C", "Group D", "Group E", "Group F", "Group G", "Group H", "Group I", "Group J", "Group K", "Group L"]
+                        tournament_sheet.append_row(headers, table_range="A1")
+                        current_all_t_rows = [headers] 
+                    
+                    t_row = [
+                        datetime.now(IL_TZ).strftime("%Y-%m-%d %H:%M:%S"),
+                        username, champ, group_a, group_b, group_c, group_d, group_e, group_f, group_g, group_h, group_i, group_j, group_k, group_l
+                    ]
+                    
+                    existing_t_idx = None
+                    for idx, row in enumerate(current_all_t_rows):
+                        if len(row) > 1 and row[1].strip() == username.strip():
+                            existing_t_idx = idx + 1
+                            break
+                            
+                    if existing_t_idx:
+                        tournament_sheet.update(f"A{existing_t_idx}:O{existing_t_idx}", [t_row])
+                    else:
+                        tournament_sheet.append_row(t_row, table_range="A1")
+                    
+                    get_cached_sheet_data.clear() 
+                    st.success(f"🎉 כל הכבוד {username}! הניחושים לטווח הארוך עודכנו בטבלה!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"❌ שגיאה בשמירה ללשונית הטורניר: {e}")
 
 with tab3:
     st.markdown("### 📊 טבלת האליפות המשפחתית")
