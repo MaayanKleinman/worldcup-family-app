@@ -55,7 +55,7 @@ TEAM_TRANSLATION = {
     "Brazil": "ברזיל 🇧🇷", "Morocco": "מרוקו 🇲🇦", "Haiti": "האיטי 🇭🇹", "Scotland": "סקוטלנד 🏴󠁧󠁢󠁳󠁣󠁴󠁿",
     "USA": "ארצות הברית 🇺🇸", "United States": "ארצות הברית 🇺🇸", "United States of America": "ארצות הברית 🇺🇸", "Paraguay": "פרגוואי 🇵🇾", "Australia": "אוסטרליה 🇦🇺", "Turkey": "טורקיה 🇹🇷", "Türkiye": "טורקיה 🇹🇷",
     "Germany": "גרמניה 🇩🇪", "Curaçao": "קוראסאו 🇨🇼", "Curacao": "קוראסאו 🇨🇼", "Ivory Coast": "חוף השנהב 🇨🇮", "Côte d'Ivoire": "חוף השנהב 🇨🇮", "Cote d'Ivoire": "חוף השנהב 🇨🇮", "Ecuador": "אקוודור 🇪🇨",
-    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה TN",
+    "Netherlands": "הולנד 🇳🇱", "Japan": "יפן 🇯🇵", "Sweden": "שוודיה 🇸🇪", "Tunisia": "טוניסיה 🇳🇱",
     "Belgium": "בלגיה 🇧🇪", "Egypt": "מצרים 🇪🇬", "Iran": "איראן 🇮🇷", "IR Iran": "איראן 🇮🇷", "New Zealand": "ניו זילנד 🇳🇿",
     "Spain": "ספרד 🇪🇸", "Cape Verde": "כף ורדה 🇨🇻", "Cabo Verde": "כף ורדה 🇨🇻", "Cape Verde Islands": "כף ורדה 🇨🇻", "Saudi Arabia": "ערב הסעודית 🇸🇦", "Uruguay": "אורוגוואי 🇺🇾",
     "France": "צרפת 🇫🇷", "Senegal": "סנגל 🇸🇳", "Iraq": "עיראק 🇮🇶", "Norway": "נורווגיה 🇳🇴",
