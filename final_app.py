@@ -86,39 +86,41 @@ now_il = datetime.now(IL_TZ)
 TOURNAMENT_START_TIME = datetime(2026, 6, 11, 22, 0, tzinfo=IL_TZ)
 is_tournament_started = now_il >= TOURNAMENT_START_TIME
 
+# --- מנגנון חסין לשגיאות: לא נשמור שגיאות בזיכרון! ---
 @st.cache_data(ttl=120)
+def _fetch_matches_cached():
+    url = "https://api.football-data.org/v4/competitions/WC/matches"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        raise Exception(f"API Error {resp.status_code}") # זורק שגיאה כדי שלא יישמר בזיכרון
+    data = resp.json()
+    if "matches" not in data:
+        raise Exception("No matches in data")
+    return data.get("matches", [])
+
+@st.cache_data(ttl=120)
+def _fetch_standings_cached():
+    url = "https://api.football-data.org/v4/competitions/WC/standings"
+    resp = requests.get(url, headers=HEADERS)
+    if resp.status_code != 200:
+        raise Exception(f"API Error {resp.status_code}")
+    data = resp.json()
+    if "standings" not in data:
+        raise Exception("No standings in data")
+    return data.get("standings", [])
+
 def fetch_world_cup_matches():
     try:
-        url = "https://api.football-data.org/v4/competitions/WC/matches"
-        resp = requests.get(url, headers=HEADERS)
-
-        st.write("API Status:", resp.status_code)
-
-        data = resp.json()
-
-        st.write("API Response:")
-        st.json(data)
-
-        if resp.status_code != 200 or "matches" not in data:
-            return None
-
-        return data.get("matches", [])
-
-    except Exception as e:
-        st.error(f"Exception: {e}")
-        return None
-
-@st.cache_data(ttl=120)
-def fetch_world_cup_standings():
-    try:
-        url = "https://api.football-data.org/v4/competitions/WC/standings"
-        resp = requests.get(url, headers=HEADERS)
-        data = resp.json()
-        if resp.status_code != 200 or "standings" not in data:
-            return None
-        return data.get("standings", [])
+        return _fetch_matches_cached()
     except Exception:
         return None
+
+def fetch_world_cup_standings():
+    try:
+        return _fetch_standings_cached()
+    except Exception:
+        return None
+# --------------------------------------------------------
 
 all_wc_matches = fetch_world_cup_matches()
 all_wc_standings = fetch_world_cup_standings()
