@@ -495,23 +495,21 @@ with tab3:
                         elif winner_code == "AWAY_TEAM":
                             actual_champion = clean_string(get_team_name_heb(m.get("awayTeam", {}).get("name")))
             
-            for group_data in all_wc_standings:
-                g_name = group_data.get("group")
-                g_table = group_data.get("table", [])
-            
-                second_row = None
-            
-                for row in g_table:
-                    if row.get("position") == 2:
-                        second_row = row
-                        break
-            
-                if second_row is None and len(g_table) > 1:
-                    second_row = g_table[1]
-            
-                if second_row:
-                    second_team_en = second_row.get("team", {}).get("name")
-                    actual_group_runners_up[g_name] = clean_string(get_team_name_heb(second_team_en))
+          # הגדרה ידנית של הסגניות כדי לעקוף את הדיליי של פיפ"א
+            actual_group_runners_up = {
+                "GROUP_A": clean_string("דרום אפריקה 🇿🇦"),
+                "GROUP_B": clean_string("קנדה 🇨🇦"),
+                "GROUP_C": clean_string("מרוקו 🇲🇦"),
+                "GROUP_D": clean_string("אוסטרליה 🇦🇺"),
+                "GROUP_E": clean_string("חוף השנהב 🇨🇮"),
+                "GROUP_F": clean_string("יפן 🇯🇵"),
+                "GROUP_G": clean_string("מצרים 🇪🇬"),
+                "GROUP_H": clean_string("כף ורדה 🇨🇻"),
+                "GROUP_I": clean_string("נורווגיה 🇳🇴"),
+                "GROUP_J": clean_string("אוסטריה 🇦🇹"),
+                "GROUP_K": clean_string("פורטוגל 🇵🇹"),
+                "GROUP_L": clean_string("קרואטיה 🇭🇷")
+            }
 
             user_guesses = get_cached_sheet_data("DailyGuesses")
             if len(user_guesses) > 0:
