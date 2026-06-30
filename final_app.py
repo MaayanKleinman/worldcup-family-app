@@ -226,7 +226,7 @@ with tab1:
                         
                         if match.get("status") == "FINISHED":
                             score_data = match.get("score", {})
-                        reg_time = score_data.get("regularTime", {})
+                            reg_time = score_data.get("regularTime", {})
                         if reg_time and reg_time.get("home") is not None:
                             score_home = reg_time.get("home")
                             score_away = reg_time.get("away")
@@ -321,7 +321,7 @@ with tab1:
                     
                     if match.get("status") == "FINISHED":
                         score_data = match.get("score", {})
-                    reg_time = score_data.get("regularTime", {})
+                        reg_time = score_data.get("regularTime", {})
                     if reg_time and reg_time.get("home") is not None:
                         score_home = reg_time.get("home")
                         score_away = reg_time.get("away")
