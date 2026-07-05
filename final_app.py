@@ -227,7 +227,7 @@ with tab1:
                         default_away = safe_int(existing.get("away"))
                         default_joker = existing.get("joker", "NO") == "YES"
                         
-                       if match.get("status") == "FINISHED":
+                        if match.get("status") == "FINISHED":
                             score_data = match.get("score", {})
                             reg_time = score_data.get("regularTime", {})
                             if reg_time and reg_time.get("home") is not None:
@@ -237,7 +237,7 @@ with tab1:
                                 score_home = score_data.get("fullTime", {}).get("home")
                                 score_away = score_data.get("fullTime", {}).get("away")
                             
-                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {away_heb} {score_away} - {score_home} {home_heb}"
+                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
                         elif is_locked:
                             lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                         else:
@@ -333,7 +333,7 @@ with tab1:
                             score_home = score_data.get("fullTime", {}).get("home")
                             score_away = score_data.get("fullTime", {}).get("away")
                         
-                        lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {away_heb} {score_away} - {score_home} {home_heb}"
+                        lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
                     else:
                         lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                         
