@@ -237,7 +237,7 @@ with tab1:
                                 score_home = score_data.get("fullTime", {}).get("home")
                                 score_away = score_data.get("fullTime", {}).get("away")
                             
-                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {away_heb} {home_heb} - {score_home} {score_away}"
+                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
                         elif is_locked:
                             lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                         else:
@@ -333,7 +333,7 @@ with tab1:
                             score_home = score_data.get("fullTime", {}).get("home")
                             score_away = score_data.get("fullTime", {}).get("away")
                         
-                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {away_heb} {home_heb} - {score_home} {score_away}"
+                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
                     else:
                         lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                         
