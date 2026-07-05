@@ -170,9 +170,12 @@ with tab1:
 
     has_any_open_matches = False
     
-    for i in range(3): 
+    # מתחילים ממינוס 1 כדי להציג את אתמול!
+    for i in range(-1, 3): 
         current_loop_date_str = (now_il + timedelta(days=i)).strftime("%Y-%m-%d")
-        if i == 0:
+        if i == -1:
+            date_label = "אתמול"
+        elif i == 0:
             date_label = "היום"
         elif i == 1:
             date_label = "מחר"
@@ -234,7 +237,7 @@ with tab1:
                                 score_home = score_data.get("fullTime", {}).get("home")
                                 score_away = score_data.get("fullTime", {}).get("away")
                             
-                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
+                            lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {away_heb} {score_away} - {score_home} {home_heb}"
                         elif is_locked:
                             lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                         else:
@@ -330,7 +333,7 @@ with tab1:
                             score_home = score_data.get("fullTime", {}).get("home")
                             score_away = score_data.get("fullTime", {}).get("away")
                         
-                        lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {home_heb} {score_home} - {score_away} {away_heb}"
+                        lock_text = f"🏁 המשחק הסתיים! תוצאת אמת: {away_heb} {score_away} - {score_home} {home_heb}"
                     else:
                         lock_text = f"🔒 נעול! המשחק החל (הניחוש שלך: {default_home} - {default_away})"
                         
